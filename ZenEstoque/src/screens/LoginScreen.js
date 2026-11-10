@@ -1,27 +1,24 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
-import { Ionicons, FontAwesome } from '@expo/vector-icons'; 
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  TouchableOpacity,
+  SafeAreaView,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from 'react-native';
+
+import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import api from '../services/api';
 import { SessionManager } from '../services/session';
-
-
-
-
 import { debugDatabase } from '../services/debugUsers';
 
-
-
-
 export default function LoginScreen({ navigation }) {
-
-
-
   debugDatabase.listarTodos();
-
   debugDatabase.verUsuarioLogado();
-
-
- 
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,66 +28,177 @@ export default function LoginScreen({ navigation }) {
 
   const validateForm = () => {
     let isValid = true;
-    setEmailError(''); setPasswordError('');
-    if (!email) { setEmailError('O email é obrigatório.'); isValid = false; } 
-    else if (!/\S+@\S+\.\S+/.test(email)) { setEmailError('Insira um email válido.'); isValid = false; }
-    if (!password) { setPasswordError('A senha é obrigatória.'); isValid = false; } 
-    else if (password.length < 6) { setPasswordError('Senha incorreta'); isValid = false; }
+
+    setEmailError('');
+    setPasswordError('');
+
+    if (!email) {
+      setEmailError('O email é obrigatório.');
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      setEmailError('Insira um email válido.');
+      isValid = false;
+    }
+
+    if (!password) {
+      setPasswordError('A senha é obrigatória.');
+      isValid = false;
+    } else if (password.length < 6) {
+      setPasswordError('Senha incorreta.');
+      isValid = false;
+    }
+
     return isValid;
   };
 
   const handleLogin = async () => {
     if (!validateForm()) return;
+
     try {
       setPasswordError('');
-      
-      const response = await api.post('/login', { email, password });
+
+      const response = await api.post('/login', {
+        email,
+        password,
+      });
+
       console.log('Login bem-sucedido!', response.data);
 
       SessionManager.setLoggedUser(email);
       navigation.replace('Home');
-      
 
-      navigation.replace('Home');
     } catch (error) {
-      setPasswordError('Credenciais inválidas');
+      setPasswordError('Credenciais inválidas.');
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.content}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={24} color="#333" />
-        </TouchableOpacity>
-        <View style={styles.header}>
-          <Text style={styles.title}>Log in</Text>
-          <View style={styles.titleUnderline} />
-        </View>
-        <View style={styles.formContainer}>
-          <Text style={styles.label}>Email</Text>
-          <TextInput style={[styles.input, emailError ? styles.inputError : null]} placeholder="contact@dscodetech.com" placeholderTextColor="#999" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
-          {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
-          <Text style={[styles.label, { marginTop: 16 }]}>Senha</Text>
-          <View style={[styles.passwordContainer, passwordError ? styles.inputError : null]}>
-            <TextInput style={styles.passwordInput} placeholder="••••••••••••" placeholderTextColor="#999" secureTextEntry={!showPassword} value={password} onChangeText={setPassword} />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-              <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color="#ccc" />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.content}
+      >
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="chevron-back" size={24} color="#9333EA" />
+          </TouchableOpacity>
+
+          <View style={styles.logoContainer}>
+            <View style={styles.logo}>
+              <Text style={styles.logoText}>Z</Text>
+            </View>
+          </View>
+
+          <View style={styles.header}>
+            <Text style={styles.title}>Entrar</Text>
+            <Text style={styles.subtitle}>
+              Acesse sua conta do ZenEstoques
+            </Text>
+          </View>
+
+          <View style={styles.formContainer}>
+            <Text style={styles.label}>Email</Text>
+
+            <TextInput
+              style={[styles.input, emailError ? styles.inputError : null]}
+              placeholder="Digite seu email"
+              placeholderTextColor="#9CA3AF"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              value={email}
+              onChangeText={setEmail}
+            />
+
+            {emailError ? (
+              <Text style={styles.errorText}>{emailError}</Text>
+            ) : null}
+
+            <Text style={[styles.label, styles.passwordLabel]}>
+              Senha
+            </Text>
+
+            <View
+              style={[
+                styles.passwordContainer,
+                passwordError ? styles.inputError : null,
+              ]}
+            >
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="Digite sua senha"
+                placeholderTextColor="#9CA3AF"
+                secureTextEntry={!showPassword}
+                value={password}
+                onChangeText={setPassword}
+              />
+
+              <TouchableOpacity
+                onPress={() => setShowPassword(!showPassword)}
+              >
+                <Ionicons
+                  name={showPassword ? 'eye-outline' : 'eye-off-outline'}
+                  size={21}
+                  color="#6B7280"
+                />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.passwordFooter}>
+              <Text style={styles.errorText}>{passwordError}</Text>
+
+              <TouchableOpacity>
+                <Text style={styles.forgotPassword}>
+                  Esqueceu a senha?
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={handleLogin}
+            >
+              <Text style={styles.primaryButtonText}>Entrar</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.passwordFooter}>
-            <Text style={styles.errorText}>{passwordError}</Text>
-            <TouchableOpacity><Text style={styles.forgotPassword}>Esqueceu a senha?</Text></TouchableOpacity>
+
+          <View style={styles.dividerContainer}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>Ou</Text>
+            <View style={styles.dividerLine} />
           </View>
-          <TouchableOpacity style={styles.primaryButton} onPress={handleLogin}><Text style={styles.primaryButtonText}>Continue</Text></TouchableOpacity>
-        </View>
-        <View style={styles.dividerContainer}><View style={styles.dividerLine} /><Text style={styles.dividerText}>Ou</Text><View style={styles.dividerLine} /></View>
-        <TouchableOpacity style={styles.socialButton}><FontAwesome name="apple" size={20} color="#000" /><Text style={styles.socialButtonText}>Login with Apple</Text></TouchableOpacity>
-        <TouchableOpacity style={styles.socialButton}><Ionicons name="logo-google" size={20} color="#DB4437" /><Text style={styles.socialButtonText}>Login with Google</Text></TouchableOpacity>
-        <View style={styles.signupContainer}>
-          <Text style={styles.signupText}>Don't have an account? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Register')}><Text style={styles.signupLink}>Sign up</Text></TouchableOpacity>
-        </View>
+
+          <TouchableOpacity style={styles.socialButton}>
+            <FontAwesome name="apple" size={20} color="#111827" />
+            <Text style={styles.socialButtonText}>
+              Login com Apple
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.socialButton}>
+            <Ionicons name="logo-google" size={20} color="#DB4437" />
+            <Text style={styles.socialButtonText}>
+              Login com Google
+            </Text>
+          </TouchableOpacity>
+
+          <View style={styles.signupContainer}>
+            <Text style={styles.signupText}>
+              Não tem uma conta? 
+            </Text>
+
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Register')}
+            >
+              <Text style={styles.signupLink}> Cadastre-se</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -99,42 +207,66 @@ export default function LoginScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#FFFFFF',
   },
 
   content: {
     flex: 1,
+  },
+
+  scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: 24,
     paddingTop: 20,
+    paddingBottom: 30,
   },
 
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F3F4F6',
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: '#F3E8FF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
+    marginBottom: 18,
+  },
+
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+
+  logo: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+    backgroundColor: '#A855F7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 4,
+  },
+
+  logoText: {
+    color: '#FFFFFF',
+    fontSize: 38,
+    fontWeight: 'bold',
   },
 
   header: {
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 28,
   },
 
   title: {
-    fontSize: 22,
+    fontSize: 26,
     fontWeight: 'bold',
-    color: '#A855F7',
+    color: '#9333EA',
   },
 
-  titleUnderline: {
-    width: 100,
-    height: 3,
-    backgroundColor: '#3B82F6',
+  subtitle: {
+    fontSize: 14,
+    color: '#6B7280',
     marginTop: 8,
-    borderRadius: 2,
   },
 
   formContainer: {
@@ -143,35 +275,41 @@ const styles = StyleSheet.create({
 
   label: {
     fontSize: 14,
-    color: '#A855F7',
+    color: '#111827',
     fontWeight: '600',
     marginBottom: 8,
+  },
+
+  passwordLabel: {
+    marginTop: 18,
   },
 
   input: {
     height: 50,
     borderWidth: 1,
-    borderColor: '#A855F7',
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    color: '#333',
+    borderColor: '#D8B4FE',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    fontSize: 15,
+    color: '#111827',
+    backgroundColor: '#FFFFFF',
   },
 
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#A855F7',
-    borderRadius: 10,
-    paddingHorizontal: 16,
+    borderColor: '#D8B4FE',
+    borderRadius: 12,
+    paddingHorizontal: 14,
     height: 50,
+    backgroundColor: '#FFFFFF',
   },
 
   passwordInput: {
     flex: 1,
-    fontSize: 16,
-    color: '#333',
+    fontSize: 15,
+    color: '#111827',
   },
 
   inputError: {
@@ -183,7 +321,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 8,
-    marginBottom: 20,
+    marginBottom: 22,
     minHeight: 20,
   },
 
@@ -193,9 +331,9 @@ const styles = StyleSheet.create({
   },
 
   forgotPassword: {
-    color: '#3B82F6',
-    fontSize: 14,
-    fontWeight: '500',
+    color: '#9333EA',
+    fontSize: 13,
+    fontWeight: '600',
   },
 
   primaryButton: {
@@ -204,18 +342,19 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    elevation: 2,
   },
 
   primaryButtonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
   },
 
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 30,
+    marginVertical: 26,
   },
 
   dividerLine: {
@@ -226,32 +365,33 @@ const styles = StyleSheet.create({
 
   dividerText: {
     marginHorizontal: 16,
-    color: '#9CA3AF',
-    fontSize: 14,
+    color: '#6B7280',
+    fontSize: 13,
   },
 
   socialButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 52,
+    height: 50,
     borderWidth: 1,
-    borderColor: '#A855F7',
+    borderColor: '#D8B4FE',
     borderRadius: 12,
-    marginBottom: 16,
+    marginBottom: 14,
+    backgroundColor: '#FFFFFF',
   },
 
   socialButtonText: {
     marginLeft: 10,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: '#111827',
   },
 
   signupContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 20,
+    marginTop: 16,
   },
 
   signupText: {
@@ -260,9 +400,8 @@ const styles = StyleSheet.create({
   },
 
   signupLink: {
-    color: '#A855F7',
+    color: '#9333EA',
     fontSize: 14,
     fontWeight: 'bold',
   },
 });
-

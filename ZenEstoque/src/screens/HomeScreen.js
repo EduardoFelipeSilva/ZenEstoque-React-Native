@@ -1,36 +1,48 @@
+
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, ScrollView, Alert } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  SafeAreaView,
+  ScrollView,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function HomeScreen({ route, navigation }) {
   const userName = route.params?.userName || 'Perfil';
 
-  const handleProfilePress = () => {
-    navigation.navigate('Profile');
-  };
-
   return (
     <SafeAreaView style={styles.container}>
-      
       <View style={styles.topMenuContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.topMenuScroll}>
-          <TouchableOpacity style={[styles.topChip, styles.activeChip]}><Text style={styles.topChipTextActive}>Home</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.topChip}><Text style={styles.topChipText}>Dashboard</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.topChip}><Text style={styles.topChipText}>Produtos</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.topChip}><Text style={styles.topChipText}>Vendas</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.topChip}><Text style={styles.topChipText}>Editar</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.topChip}><Text style={styles.topChipText}>Ajuda</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.topChip} onPress={() => navigation.navigate('Help')}><Text style={styles.topChipText}>Ajuda</Text></TouchableOpacity>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.topMenuScroll}
+        >
+          {['Home', 'Dashboard', 'Produtos', 'Vendas', 'Editar', 'Ajuda'].map((item) => (
+            <View
+              key={item}
+              style={[
+                styles.topChip,
+                item === 'Home' && styles.activeChip,
+              ]}
+            >
+              <Text style={styles.topChipText}>{item}</Text>
+            </View>
+          ))}
         </ScrollView>
 
-        
-        <TouchableOpacity style={styles.profileChip} onPress={handleProfilePress} activeOpacity={0.8}>
-          <Ionicons name="person-circle" size={24} color="#A855F7" />
+        <TouchableOpacity
+          style={styles.profileChip}
+          onPress={() => navigation.navigate('Profile')}
+        >
+          <Ionicons name="person-circle" size={25} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.mainContent}>
-        
         <View style={styles.logoWrapper}>
           <View style={styles.logoShadow} />
           <View style={styles.logoBox}>
@@ -38,27 +50,27 @@ export default function HomeScreen({ route, navigation }) {
           </View>
         </View>
 
-        
+        <Text style={styles.welcomeText}>Olá, {userName}!</Text>
+
         <View style={styles.actionButtonsContainer}>
-          <TouchableOpacity style={styles.mainButton} activeOpacity={0.8}>
+          <TouchableOpacity style={styles.mainButton}>
             <Text style={styles.mainButtonText}>Cadastro</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.mainButton} activeOpacity={0.8}>
+          <TouchableOpacity style={styles.mainButton}>
             <Text style={styles.mainButtonText}>Consultar</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.mainButton} activeOpacity={0.8}>
+          <TouchableOpacity style={styles.mainButton}>
             <Text style={styles.mainButtonText}>Remover</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.mainButton} activeOpacity={0.8}>
+          <TouchableOpacity style={styles.mainButton}>
             <Text style={styles.mainButtonText}>Editar</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
 
-      
       <View style={styles.footerDecorator} />
     </SafeAreaView>
   );
@@ -67,75 +79,55 @@ export default function HomeScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#FFFFFF',
   },
-
   topMenuContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
     paddingVertical: 10,
-    paddingRight: 12,
+    paddingRight: 10,
   },
-
   topMenuScroll: {
-    paddingHorizontal: 16,
-    gap: 8,
+    paddingHorizontal: 12,
+    gap: 7,
     alignItems: 'center',
   },
-
   topChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#F3F4F6',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-
-  activeChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 10,
     backgroundColor: '#A855F7',
-    borderColor: '#A855F7',
+    borderBottomWidth: 3,
+    borderBottomColor: '#9333EA',
   },
-
+  activeChip: {
+    backgroundColor: '#9333EA',
+  },
   topChipText: {
-    color: '#4B5563',
+    color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '600',
   },
-
-  topChipTextActive: {
-    color: '#ffffff',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-
   profileChip: {
-    padding: 4,
-    borderRadius: 20,
-    backgroundColor: '#F3F4F6',
-    borderWidth: 1,
-    borderColor: '#D8B4FE',
-    marginLeft: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
+    padding: 5,
+    marginLeft: 3,
+    borderRadius: 25,
+    backgroundColor: '#A855F7',
   },
-
   mainContent: {
     alignItems: 'center',
     paddingHorizontal: 24,
-    paddingTop: 40,
+    paddingTop: 55,
     paddingBottom: 60,
   },
-
   logoWrapper: {
     position: 'relative',
-    marginBottom: 40,
+    marginBottom: 25,
     alignItems: 'center',
     justifyContent: 'center',
   },
-
   logoShadow: {
     position: 'absolute',
     width: 70,
@@ -145,7 +137,6 @@ const styles = StyleSheet.create({
     top: 4,
     left: 4,
   },
-
   logoBox: {
     width: 70,
     height: 70,
@@ -154,34 +145,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
   logoText: {
-    color: '#ffffff',
+    color: '#FFFFFF',
     fontSize: 36,
     fontWeight: 'bold',
   },
-
+  welcomeText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#6B21A8',
+    marginBottom: 25,
+  },
   actionButtonsContainer: {
     width: '100%',
     gap: 16,
   },
-
   mainButton: {
     width: '100%',
     backgroundColor: '#A855F7',
     paddingVertical: 18,
-    borderRadius: 16,
+    borderRadius: 12,
     alignItems: 'center',
     borderBottomWidth: 4,
     borderBottomColor: '#9333EA',
   },
-
   mainButtonText: {
-    color: '#ffffff',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
   },
-
   footerDecorator: {
     position: 'absolute',
     bottom: 0,

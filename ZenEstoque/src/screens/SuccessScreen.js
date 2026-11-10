@@ -1,0 +1,124 @@
+
+import React from 'react';
+import {
+  SafeAreaView,
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+
+export default function SuccessScreen() {
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <View style={styles.backButton}>
+          <Ionicons name="chevron-back" size={22} color="#333333" />
+        </View>
+      </View>
+
+      <View style={styles.logoContainer}>
+        <View style={styles.logo} />
+      </View>
+
+      <Text style={styles.pageTitle}>Informações Pessoais</Text>
+
+      <View style={styles.successContainer}>
+        <View style={styles.checkCircle}>
+          <Ionicons name="checkmark" size={28} color="#9333FF" />
+        </View>
+
+        <Text style={styles.successTitle}>Sucesso!</Text>
+
+        <Text style={styles.message}>
+          Parabéns! Suas Informações foram alteradas
+          {'\n'}
+          com Sucesso. Vamos retornar para o app.
+        </Text>
+      </View>
+
+      <TouchableOpacity style={styles.continueButton}>
+        <Text style={styles.continueText}>Continue</Text>
+      </TouchableOpacity>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 17,
+  },
+  header: {
+    height: 48,
+    justifyContent: 'center',
+  },
+  backButton: {
+    width: 29,
+    height: 29,
+    borderRadius: 20,
+    backgroundColor: '#EEEEEE',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  logo: {
+    width: 52,
+    height: 46,
+    backgroundColor: '#9333FF',
+    transform: [{ skewX: '-8deg' }],
+  },
+  pageTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#222222',
+    marginTop: 0,
+  },
+  successContainer: {
+    alignItems: 'center',
+    marginTop: 88,
+  },
+  checkCircle: {
+    width: 66,
+    height: 66,
+    borderRadius: 40,
+    borderWidth: 1.5,
+    borderColor: '#9333FF',
+    backgroundColor: '#F8F3FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 25,
+  },
+  successTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#222222',
+    marginBottom: 17,
+  },
+  message: {
+    fontSize: 11,
+    color: '#999999',
+    textAlign: 'center',
+    lineHeight: 16,
+    paddingHorizontal: 5,
+  },
+  continueButton: {
+    height: 38,
+    backgroundColor: '#9333FF',
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 27,
+  },
+  continueText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: 'bold',
+  },
+});

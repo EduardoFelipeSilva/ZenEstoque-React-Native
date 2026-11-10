@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -8,6 +9,7 @@ import RegisterScreen from './src/screens/RegisterScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import HelpScreen from './src/screens/HelpScreen';
+import EditProductScreen from './src/screens/EditProductScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -21,6 +23,7 @@ export default function App() {
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="Help" component={HelpScreen} />
+        <Stack.Screen name="EditProduct" component={EditProductScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

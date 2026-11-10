@@ -1,18 +1,27 @@
+
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, SafeAreaView, ScrollView, Alert } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  TouchableOpacity,
+  SafeAreaView,
+  ScrollView,
+  Alert,
+} from 'react-native';
+
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SessionManager } from '../services/session';
 
 const USERS_KEY = '@zen_estoques_users';
-const CURRENT_USER_KEY = '@zen_estoques_logged_user';
 
 export default function ProfileScreen({ navigation }) {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [telefone, setTelefone] = useState('');
   const [empresa, setEmpresa] = useState('');
-
 
   useEffect(() => {
     loadUserData();
@@ -21,10 +30,11 @@ export default function ProfileScreen({ navigation }) {
   const loadUserData = async () => {
     try {
       const loggedEmail = SessionManager.getLoggedUser();
-      const usersJson = await AsyncStorage.getItem('@zen_estoques_users');
+      const usersJson = await AsyncStorage.getItem(USERS_KEY);
       const users = usersJson ? JSON.parse(usersJson) : [];
 
       const currentUser = users.find(u => u.email === loggedEmail);
+
       if (currentUser) {
         setNome(currentUser.nome || '');
         setEmail(currentUser.email || '');
@@ -45,93 +55,113 @@ export default function ProfileScreen({ navigation }) {
         if (u.email === email) {
           return { ...u, nome, telefone, empresa };
         }
+
         return u;
       });
 
       await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
-      Alert.alert("Sucesso", "Informações atualizadas com sucesso!");
+
+      Alert.alert('Sucesso', 'Informações atualizadas com sucesso!');
       navigation.goBack();
     } catch (error) {
-      Alert.alert("Erro", "Não foi possível guardar as alterações.");
+      Alert.alert('Erro', 'Não foi possível guardar as alterações.');
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={24} color="#333" />
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="chevron-back" size={24} color="#9333EA" />
         </TouchableOpacity>
 
-
-        <View style={styles.headerLogoContainer}>
-          <View style={styles.headerLogoBox}>
-            <Text style={styles.headerLogoText}>Z</Text>
+        <View style={styles.logoContainer}>
+          <View style={styles.logo}>
+            <Text style={styles.logoText}>Z</Text>
           </View>
         </View>
 
-        <Text style={styles.screenTitle}>Informações Pessoais</Text>
-
+        <View style={styles.header}>
+          <Text style={styles.screenTitle}>Informações Pessoais</Text>
+          <Text style={styles.subtitle}>
+            Consulte e atualize seus dados cadastrais.
+          </Text>
+        </View>
 
         <View style={styles.formContainer}>
           <Text style={styles.label}>Nome Completo</Text>
-          <TextInput 
-            style={styles.input} 
-            placeholder={nome || "Nome Completo"} 
+          <TextInput
+            style={styles.input}
+            placeholder="Nome Completo"
             placeholderTextColor="#9CA3AF"
-            value={nome} 
-            onChangeText={setNome} 
+            value={nome}
+            onChangeText={setNome}
           />
 
           <Text style={styles.label}>E-mail</Text>
-          <TextInput 
-            style={[styles.input, styles.disabledInput]} 
-            placeholder={email || "email@email.com"} 
+          <TextInput
+            style={[styles.input, styles.disabledInput]}
+            placeholder="email@email.com"
             placeholderTextColor="#9CA3AF"
-            value={email} 
-            editable={false} 
+            value={email}
+            editable={false}
           />
 
           <Text style={styles.label}>Telefone</Text>
-          <TextInput 
-            style={styles.input} 
-            placeholder={telefone || "(11) 91234-5678"} 
+          <TextInput
+            style={styles.input}
+            placeholder="(11) 91234-5678"
             placeholderTextColor="#9CA3AF"
             keyboardType="phone-pad"
-            value={telefone} 
-            onChangeText={setTelefone} 
+            value={telefone}
+            onChangeText={setTelefone}
           />
 
           <Text style={styles.label}>Empresa</Text>
-          <TextInput 
-            style={styles.input} 
-            placeholder={empresa || "Nome da Empresa"} 
+          <TextInput
+            style={styles.input}
+            placeholder="Nome da Empresa"
             placeholderTextColor="#9CA3AF"
-            value={empresa} 
-            onChangeText={setEmpresa} 
+            value={empresa}
+            onChangeText={setEmpresa}
           />
 
-
           <TouchableOpacity style={styles.securityBox} activeOpacity={0.8}>
-            <View>
+            <View style={styles.securityIcon}>
+              <Ionicons name="lock-closed-outline" size={21} color="#9333EA" />
+            </View>
+
+            <View style={styles.securityTextContainer}>
               <Text style={styles.securityTitle}>Segurança</Text>
               <Text style={styles.securitySubtitle}>Alterar Senha</Text>
             </View>
+
             <Ionicons name="chevron-forward" size={20} color="#6B7280" />
           </TouchableOpacity>
         </View>
 
-        {/* Botões de Ação */}
-        <TouchableOpacity style={styles.primaryButton} onPress={handleSaveChanges}>
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={handleSaveChanges}
+        >
           <Text style={styles.primaryButtonText}>Salvar alterações</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={styles.secondaryButton}
+          onPress={() => navigation.goBack()}
+        >
           <Text style={styles.secondaryButtonText}>Cancelar</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.deleteAccountContainer}>
+          <Ionicons name="trash-outline" size={17} color="#DC2626" />
           <Text style={styles.deleteAccountText}>Excluir minha conta</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -142,51 +172,63 @@ export default function ProfileScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#FFFFFF',
   },
 
   scrollContainer: {
+    flexGrow: 1,
     paddingHorizontal: 24,
-    paddingBottom: 40,
-    paddingTop: 10,
+    paddingBottom: 35,
+    paddingTop: 20,
   },
 
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F3F4F6',
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: '#F3E8FF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
+    marginBottom: 18,
   },
 
-  headerLogoContainer: {
+  logoContainer: {
     alignItems: 'center',
     marginBottom: 16,
   },
 
-  headerLogoBox: {
-    width: 60,
-    height: 60,
+  logo: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
     backgroundColor: '#A855F7',
-    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    transform: [{ rotate: '-3deg' }],
+    elevation: 4,
   },
 
-  headerLogoText: {
-    color: '#ffffff',
-    fontSize: 28,
+  logoText: {
+    color: '#FFFFFF',
+    fontSize: 38,
     fontWeight: 'bold',
+  },
+
+  header: {
+    alignItems: 'center',
+    marginBottom: 24,
   },
 
   screenTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 20,
+    color: '#9333EA',
+  },
+
+  subtitle: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginTop: 7,
+    textAlign: 'center',
   },
 
   formContainer: {
@@ -195,51 +237,65 @@ const styles = StyleSheet.create({
   },
 
   label: {
-    fontSize: 13,
-    color: '#374151',
+    fontSize: 14,
+    color: '#111827',
     fontWeight: '600',
-    marginBottom: 6,
-    marginTop: 12,
+    marginBottom: 8,
+    marginTop: 15,
   },
 
   input: {
     height: 50,
-    borderWidth: 1.5,
-    borderColor: '#A855F7',
+    borderWidth: 1,
+    borderColor: '#D8B4FE',
     borderRadius: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     fontSize: 15,
     color: '#111827',
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
   },
 
   disabledInput: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F3F4F6',
     borderColor: '#D1D5DB',
+    color: '#6B7280',
   },
 
   securityBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1.5,
-    borderColor: '#A855F7',
-    borderRadius: 16,
-    padding: 16,
-    marginTop: 20,
-    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#D8B4FE',
+    borderRadius: 12,
+    padding: 14,
+    marginTop: 22,
+    backgroundColor: '#FFFFFF',
+  },
+
+  securityIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: '#F3E8FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  securityTextContainer: {
+    flex: 1,
+    marginLeft: 12,
   },
 
   securityTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
     color: '#111827',
   },
 
   securitySubtitle: {
-    fontSize: 14,
-    color: '#4B5563',
-    marginTop: 2,
+    fontSize: 13,
+    color: '#6B7280',
+    marginTop: 3,
   },
 
   primaryButton: {
@@ -249,37 +305,43 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
+    elevation: 2,
   },
 
   primaryButtonText: {
-    color: '#fff',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
   },
 
   secondaryButton: {
-    backgroundColor: '#A855F7',
+    backgroundColor: '#FFFFFF',
     height: 52,
     borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#A855F7',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
+    marginBottom: 18,
   },
 
   secondaryButtonText: {
-    color: '#fff',
+    color: '#9333EA',
     fontSize: 16,
     fontWeight: 'bold',
   },
 
   deleteAccountContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10,
+    justifyContent: 'center',
+    marginTop: 5,
+    gap: 7,
   },
 
   deleteAccountText: {
-    color: '#111827',
+    color: '#DC2626',
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
 });
