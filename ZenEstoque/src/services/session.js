@@ -1,17 +1,25 @@
-// Variável global em memória para guardar o email do usuário logado
-let loggedUserEmail = null;
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LOGGED_USER_KEY } from '../storage/storageKeys';
 
 export const SessionManager = {
-  setLoggedUser: (email) => {
-    loggedUserEmail = email;
-    console.log('👤 [SESSÃO] Usuário guardado em memória:', email);
-  },
-  
-  getLoggedUser: () => {
-    return loggedUserEmail;
+  // Salvar o usuário conectado
+  setLoggedUser: async (email) => {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    await AsyncStorage.setItem(
+      LOGGED_USER_KEY,
+      normalizedEmail
+    );
   },
 
-  clearSession: () => {
-    loggedUserEmail = null;
+  // Consultar o usuário conectado
+  getLoggedUser: async () => {
+    return await AsyncStorage.getItem(LOGGED_USER_KEY);
+  },
+
+  // Encerrar a sessão
+  clearSession: async () => {
+    await AsyncStorage.removeItem(LOGGED_USER_KEY);
   }
 };

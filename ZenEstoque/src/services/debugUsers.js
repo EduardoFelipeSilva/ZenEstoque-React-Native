@@ -1,43 +1,56 @@
 
-import { storage } from '../storage/storage';
-
-const USERS_KEY = '@zen_estoques_users';
-const LOGGED_USER_KEY = '@zen_estoques_logged_user';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  USERS_KEY,
+  LOGGED_USER_KEY
+} from '../storage/storageKeys';
 
 export const debugDatabase = {
-
-
-  listarTodos: () => {
+  // Listar usuários cadastrados
+  listarTodos: async () => {
     try {
-      const usersJson = storage.getString(USERS_KEY);
+      const usersJson = await AsyncStorage.getItem(USERS_KEY);
       const users = usersJson ? JSON.parse(usersJson) : [];
 
-      console.log('📦 [DATABASE] Usuários cadastrados:', JSON.stringify(users, null, 2));
+      // Não exibir senhas no console
+      const safeUsers = users.map(({ senha, ...user }) => user);
 
-      return users;
+      console.log(
+        '📦 [DATABASE] Usuários cadastrados:',
+        JSON.stringify(safeUsers, null, 2)
+      );
+
+      return safeUsers;
     } catch (error) {
       console.log('❌ [DATABASE] Erro ao listar usuários:', error);
+      return [];
     }
   },
 
- 
-  verUsuarioLogado: () => {
+  // Consultar usuário logado
+  verUsuarioLogado: async () => {
     try {
-      const loggedEmail = storage.getString(LOGGED_USER_KEY);
+      const loggedEmail = await AsyncStorage.getItem(LOGGED_USER_KEY);
 
-      console.log('👤 [DATABASE] Email logado atualmente:', loggedEmail);
+      console.log(
+        '👤 [DATABASE] Email logado atualmente:',
+        loggedEmail
+      );
 
       return loggedEmail;
     } catch (error) {
       console.log('❌ [DATABASE] Erro ao verificar usuário logado:', error);
+      return null;
     }
   },
 
-
-  limparBanco: () => {
+  // Limpar dados de desenvolvimento
+  limparBanco: async () => {
     try {
-      storage.delete(USERS_KEY);
-      storage.delete(LOGGED_USER_KEY);
+      await AsyncStorage.multiRemove([
+        USERS_KEY,
+        LOGGED_USER_KEY
+      ]);
 
       console.log('🗑️ [DATABASE] Base de dados limpa com sucesso!');
     } catch (error) {

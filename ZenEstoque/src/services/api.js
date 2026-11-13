@@ -1,19 +1,22 @@
 
-import { storage } from '../storage/storage';
-
-const USERS_KEY = '@zen_estoques_users';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { USERS_KEY } from '../storage/storageKeys';
 
 const api = {
   post: async (endpoint, bodyData) => {
-
+    // CADASTRO DE USUÁRIO
     if (endpoint === '/register') {
       try {
         const { nome, email, telefone, empresa, senha } = bodyData;
 
-        const usersJson = storage.getString(USERS_KEY);
+        const normalizedEmail = email.trim().toLowerCase();
+
+        const usersJson = await AsyncStorage.getItem(USERS_KEY);
         const users = usersJson ? JSON.parse(usersJson) : [];
 
-        const userExists = users.find(u => u.email === email);
+        const userExists = users.some(
+          user => user.email.toLowerCase() === normalizedEmail
+        );
 
         if (userExists) {
           throw {
@@ -24,18 +27,30 @@ const api = {
           };
         }
 
-        const newUser = { nome, email, telefone, empresa, senha };
+        const newUser = {
+          nome,
+          email: normalizedEmail,
+          telefone,
+          empresa,
+          senha
+        };
 
         users.push(newUser);
 
-        storage.set(USERS_KEY, JSON.stringify(users));
+        await AsyncStorage.setItem(
+          USERS_KEY,
+          JSON.stringify(users)
+        );
 
         return {
-          data: { message: 'Usuário cadastrado com sucesso!' }
+          data: {
+            message: 'Usuário cadastrado com sucesso!'
+          }
         };
-
       } catch (error) {
-        if (error.response) throw error;
+        if (error.response) {
+          throw error;
+        }
 
         throw {
           response: {
@@ -46,32 +61,57 @@ const api = {
       }
     }
 
+    // LOGIN DE USUÁRIO
     if (endpoint === '/login') {
-      const { email, password } = bodyData;
+      try {
+        const { email, password } = bodyData;
 
-      const usersJson = storage.getString(USERS_KEY);
-      const users = usersJson ? JSON.parse(usersJson) : [];
+        const normalizedEmail = email.trim().toLowerCase();
 
-      const user = users.find(
-        u => u.email === email && u.senha === password
-      );
+        const usersJson = await AsyncStorage.getItem(USERS_KEY);
+        const users = usersJson ? JSON.parse(usersJson) : [];
 
-      if (!user) {
+        const user = users.find(
+          item =>
+            item.email.toLowerCase() === normalizedEmail &&
+            item.senha === password
+        );
+
+        if (!user) {
+          throw {
+            response: {
+              status: 401,
+              data: { error: 'Credenciais inválidas.' }
+            }
+          };
+        }
+
+        return {
+          data: {
+            message: 'Login bem-sucedido!',
+            user: {
+              nome: user.nome,
+              email: user.email,
+              telefone: user.telefone,
+              empresa: user.empresa
+            }
+          }
+        };
+      } catch (error) {
+        if (error.response) {
+          throw error;
+        }
+
         throw {
           response: {
-            status: 401,
-            data: { error: 'Credenciais inválidas.' }
+            status: 500,
+            data: { error: 'Erro ao realizar login.' }
           }
         };
       }
-
-      return {
-        data: {
-          message: 'Login bem-sucedido',
-          token: 'fake-jwt-token-local'
-        }
-      };
     }
+
+    throw new Error(`Endpoint não encontrado: ${endpoint}`);
   }
 };
 

@@ -1,73 +1,144 @@
+
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, ScrollView, Alert } from 'react-native';
-import { Ionicons, MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
-import { SessionManager } from '../services/session';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  SafeAreaView,
+  ScrollView,
+  Alert,
+} from 'react-native';
+
+import { Ionicons } from '@expo/vector-icons';
 
 export default function HelpScreen({ navigation }) {
-  const userName = SessionManager.getLoggedUser() || 'Perfil';
-
   const handleProfilePress = () => {
     navigation.navigate('Profile');
   };
 
   const handleContactPress = () => {
-    Alert.alert("Contato", "Entre em contato conosco através do email: suporte@zenestoques.com");
+    Alert.alert(
+      'Contato',
+      'Entre em contato conosco através do email: suporte@zenestoques.com'
+    );
   };
 
   const handleProblemPress = () => {
-    Alert.alert("Reportar Problema", "Descreva o seu problema para a nossa equipa técnica.");
+    Alert.alert(
+      'Reportar Problema',
+      'Descreva o seu problema para a nossa equipa técnica.'
+    );
   };
 
   const handleRatingPress = () => {
-    Alert.alert("Avaliação", "Obrigado por querer avaliar o Zen Estoques!");
+    Alert.alert(
+      'Avaliação',
+      'Obrigado por querer avaliar o Zen Estoques!'
+    );
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      
-      <View style={styles.topMenuContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.topMenuScroll}>
-          <TouchableOpacity style={styles.topChip} onPress={() => navigation.navigate('Home')}><Text style={styles.topChipText}>Home</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.topChip}><Text style={styles.topChipText}>Dashboard</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.topChip}><Text style={styles.topChipText}>Produtos</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.topChip}><Text style={styles.topChipText}>Vendas</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.topChip}><Text style={styles.topChipText}>Editar</Text></TouchableOpacity>
-          <TouchableOpacity style={[styles.topChip, styles.activeChip]}><Text style={styles.topChipTextActive}>Ajuda</Text></TouchableOpacity>
-        </ScrollView>
+      {/* Menu superior em duas linhas, conforme o Figma */}
+      <View style={styles.header}>
+        <View style={styles.menu}>
+          <View style={styles.menuRow}>
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => navigation.navigate('Home')}
+            >
+              <Text style={styles.menuText}>Home</Text>
+            </TouchableOpacity>
 
-        <TouchableOpacity style={styles.profileChip} onPress={handleProfilePress} activeOpacity={0.8}>
-          <Ionicons name="person-circle" size={24} color="#A855F7" />
-        </TouchableOpacity>
+            <TouchableOpacity style={styles.menuButton}>
+              <Text style={styles.menuText}>Dashboard</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.menuButton}>
+              <Text style={styles.menuText}>Produtos</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.menuRow}>
+            <TouchableOpacity style={styles.menuButton}>
+              <Text style={styles.menuText}>Vendas</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.menuButton}>
+              <Text style={styles.menuText}>Editar</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.menuButton}>
+              <Text style={styles.menuText}>Ajuda</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.profileButton}
+              onPress={handleProfilePress}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.butterfly}>🦋</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.mainContent} showsVerticalScrollIndicator={false}>
+      {/* Conteúdo da tela */}
+      <ScrollView
+        contentContainerStyle={styles.mainContent}
+        showsVerticalScrollIndicator={false}
+      >
         <Text style={styles.screenTitle}>Ajuda</Text>
 
-        
-        <TouchableOpacity style={styles.card} activeOpacity={0.85} onPress={handleContactPress}>
-          <View style={styles.iconCircle}>
-            <Ionicons name="call" size={28} color="#FFFFFF" />
+        {/* Card Contato */}
+        <TouchableOpacity
+          style={styles.card}
+          activeOpacity={0.85}
+          onPress={handleContactPress}
+        >
+          <View style={styles.phoneCircle}>
+            <Ionicons name="call" size={32} color="#FFFFFF" />
           </View>
+
           <Text style={styles.cardTitle}>Contato</Text>
-          <Text style={styles.cardSubtitle}>Precisa de alguma ajuda?{'\n'}Entre em contato conosco!</Text>
+
+          <Text style={styles.cardSubtitle}>
+            Precisa de alguma ajuda?{' \n'}
+            Entre em contato conosco!
+          </Text>
         </TouchableOpacity>
 
-        
-        <TouchableOpacity style={styles.card} activeOpacity={0.85} onPress={handleProblemPress}>
-          <View style={styles.iconCircle}>
-            <MaterialIcons name="assignment" size={28} color="#FFFFFF" />
-          </View>
+        {/* Card Problema */}
+        <TouchableOpacity
+          style={styles.card}
+          activeOpacity={0.85}
+          onPress={handleProblemPress}
+        >
+          <Text style={styles.illustration}>📝</Text>
+
           <Text style={styles.cardTitle}>Problema</Text>
-          <Text style={styles.cardSubtitle}>Está com algum Problema?{'\n'}Entre em contato conosco!</Text>
+
+          <Text style={styles.cardSubtitle}>
+            Está com algum Problema?{' \n'}
+            Entre em contato conosco!
+          </Text>
         </TouchableOpacity>
 
-        
-        <TouchableOpacity style={styles.card} activeOpacity={0.85} onPress={handleRatingPress}>
-          <View style={styles.iconCircle}>
-            <FontAwesome5 name="star" size={26} color="#FFFFFF" />
-          </View>
+        {/* Card Avaliação */}
+        <TouchableOpacity
+          style={styles.card}
+          activeOpacity={0.85}
+          onPress={handleRatingPress}
+        >
+          <Text style={styles.illustration}>⭐</Text>
+
           <Text style={styles.cardTitle}>Avaliação</Text>
-          <Text style={styles.cardSubtitle}>Avalie o nosso App na Play{'\n'}store/Apple Store</Text>
+
+          <Text style={styles.cardSubtitle}>
+            Avalie o nosso App na Play{' \n'}
+            store/Apple Store
+          </Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -76,113 +147,123 @@ export default function HelpScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: {
-     flex: 1, 
-     backgroundColor: '#ffffff' 
-     },
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
 
-  topMenuContainer: {
-     flexDirection: 'row', 
-     alignItems: 'center', 
-     borderBottomWidth: 1, 
-     borderBottomColor: '#E5E7EB', 
-     paddingVertical: 10, 
-     paddingRight: 12 
-     },
+  header: {
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 10,
+    borderBottomWidth: 2,
+    borderBottomColor: '#9747FF',
+    marginHorizontal: 12,
+  },
 
-  topMenuScroll: {
-     paddingHorizontal: 16, 
-     gap: 8, 
-     alignItems: 'center' 
-     },
-  topChip: {
-     paddingHorizontal: 14, 
-     paddingVertical: 8, 
-     borderRadius: 20, 
-     backgroundColor: '#F3F4F6', 
-     borderWidth: 1, 
-     borderColor: '#E5E7EB' 
-     },
+  menu: {
+    gap: 5,
+  },
 
-  activeChip: {
-     backgroundColor: '#A855F7', 
-     borderColor: '#A855F7' 
-     },
+  menuRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+  },
 
-  topChipText: {
-     color: '#4B5563', 
-     fontSize: 13, 
-     fontWeight: '600' 
-     },
+  menuButton: {
+    backgroundColor: '#9747FF',
+    paddingHorizontal: 11,
+    paddingVertical: 8,
+    borderRadius: 9,
+    elevation: 3,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 1,
+  },
 
-  topChipTextActive: {
-     color: '#ffffff', 
-     fontSize: 13, 
-     fontWeight: '600' 
-     },
+  menuText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '500',
+  },
 
-  profileChip: {
-     padding: 4, 
-     borderRadius: 20, 
-     backgroundColor: '#F3F4F6', 
-     borderWidth: 1, 
-     borderColor: '#D8B4FE', 
-     marginLeft: 4, 
-     alignItems: 'center', 
-     justifyContent: 'center' 
-     },
+  profileButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#E5E5E5',
+    borderWidth: 1,
+    borderColor: '#9747FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  butterfly: {
+    fontSize: 25,
+  },
 
   mainContent: {
-     paddingHorizontal: 24, 
-     paddingTop: 20, 
-     paddingBottom: 40, 
-     alignItems: 'center' 
-     },
+    paddingHorizontal: 24,
+    paddingTop: 14,
+    paddingBottom: 20,
+    alignItems: 'center',
+  },
 
   screenTitle: {
-     fontSize: 26, 
-     fontWeight: 'bold', 
-     color: '#111827', 
-     alignSelf: 'flex-start', 
-     marginBottom: 20 
-     },
+    width: '100%',
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#222222',
+    marginBottom: 12,
+    marginLeft: 4,
+  },
 
   card: {
-     width: '100%', 
-     backgroundColor: '#C084FC', 
-     borderRadius: 20, 
-     paddingVertical: 24, 
-     paddingHorizontal: 20, 
-     alignItems: 'center', 
-     marginBottom: 20, 
-     shadowColor: '#000', 
-     shadowOffset: { width: 0, height: 2 }, 
-     shadowOpacity: 0.1, 
-     shadowRadius: 4, 
-     elevation: 3 
-     },
+    width: '85%',
+    height: 136,
+    backgroundColor: '#C99AF5',
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: '#9870B9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+    paddingHorizontal: 10,
+  },
 
-  iconCircle: {
-     width: 56, 
-     height: 56, 
-     borderRadius: 28, 
-     backgroundColor: '#3B82F6', 
-     alignItems: 'center', 
-     justifyContent: 'center', 
-     marginBottom: 12 
-     },
+  phoneCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#2196D2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+
+  illustration: {
+    fontSize: 43,
+    height: 52,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    marginBottom: 2,
+  },
 
   cardTitle: {
-     fontSize: 22, 
-     fontWeight: 'bold', 
-     color: '#FFFFFF', 
-     marginBottom: 6 
-     },
+    fontSize: 19,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
 
   cardSubtitle: {
-     fontSize: 14, 
-     color: '#FFFFFF', 
-     textAlign: 'center', 
-     lineHeight: 20, 
-     fontWeight: '500' 
-     }
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#F5E9FF',
+    textAlign: 'center',
+    lineHeight: 16,
+  },
 });

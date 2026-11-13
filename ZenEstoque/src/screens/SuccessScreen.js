@@ -22,7 +22,7 @@ export default function SuccessScreen() {
         <View style={styles.logo} />
       </View>
 
-      <Text style={styles.pageTitle}>Informações Pessoais</Text>
+      <Text style={styles.pageTitle}>Informações pessoais</Text>
 
       <View style={styles.successContainer}>
         <View style={styles.checkCircle}>
@@ -32,14 +32,14 @@ export default function SuccessScreen() {
         <Text style={styles.successTitle}>Sucesso!</Text>
 
         <Text style={styles.message}>
-          Parabéns! Suas Informações foram alteradas
+          Parabéns! Suas informações foram alteradas
           {'\n'}
-          com Sucesso. Vamos retornar para o app.
+          com sucesso. Vamos retornar ao aplicativo.
         </Text>
       </View>
 
       <TouchableOpacity style={styles.continueButton}>
-        <Text style={styles.continueText}>Continue</Text>
+        <Text style={styles.continueText}>Continuar</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -51,10 +51,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 17,
   },
+
   header: {
     height: 48,
     justifyContent: 'center',
   },
+
   backButton: {
     width: 29,
     height: 29,
@@ -63,27 +65,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+
   logoContainer: {
     alignItems: 'center',
     marginTop: 4,
     marginBottom: 8,
   },
+
   logo: {
     width: 52,
     height: 46,
     backgroundColor: '#9333FF',
     transform: [{ skewX: '-8deg' }],
   },
+
   pageTitle: {
     fontSize: 14,
     fontWeight: 'bold',
     color: '#222222',
-    marginTop: 0,
   },
+
   successContainer: {
     alignItems: 'center',
     marginTop: 88,
   },
+
   checkCircle: {
     width: 66,
     height: 66,
@@ -95,12 +101,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 25,
   },
+
   successTitle: {
     fontSize: 14,
     fontWeight: 'bold',
     color: '#222222',
     marginBottom: 17,
   },
+
   message: {
     fontSize: 11,
     color: '#999999',
@@ -108,6 +116,7 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     paddingHorizontal: 5,
   },
+
   continueButton: {
     height: 38,
     backgroundColor: '#9333FF',
@@ -116,6 +125,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 27,
   },
+
   continueText: {
     color: '#FFFFFF',
     fontSize: 11,

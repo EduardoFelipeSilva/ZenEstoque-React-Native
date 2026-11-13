@@ -10,7 +10,6 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 
 export default function EditProductScreen({ navigation }) {
   const [nome, setNome] = useState('');
@@ -27,90 +26,111 @@ export default function EditProductScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.topMenuContainer}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.topMenuScroll}
-        >
-          {['Home', 'Dashboard', 'Produtos', 'Vendas', 'Editar', 'Ajuda'].map((item) => (
+      {/* Menu superior */}
+      <View style={styles.header}>
+        <View style={styles.menu}>
+          <View style={styles.menuRow}>
             <TouchableOpacity
-              key={item}
-              style={[
-                styles.topChip,
-                item === 'Editar' && styles.activeChip,
-              ]}
-              onPress={() => {
-                if (item === 'Home') navigation.navigate('Home');
-              }}
+              style={styles.menuButton}
+              onPress={() => navigation.navigate('Home')}
             >
-              <Text
-                style={[
-                  styles.topChipText,
-                  item === 'Editar' && styles.activeChipText,
-                ]}
-              >
-                {item}
-              </Text>
+              <Text style={styles.menuText}>Home</Text>
             </TouchableOpacity>
-          ))}
-        </ScrollView>
 
-        <TouchableOpacity style={styles.profileChip}>
-          <Ionicons name="person-circle" size={25} color="#A855F7" />
-        </TouchableOpacity>
+            <TouchableOpacity style={styles.menuButton}>
+              <Text style={styles.menuText}>Dashboard</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.menuButton}>
+              <Text style={styles.menuText}>Produtos</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.menuRow}>
+            <TouchableOpacity style={styles.menuButton}>
+              <Text style={styles.menuText}>Vendas</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.menuButton, styles.activeButton]}
+            >
+              <Text style={styles.menuText}>Editar</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.menuButton}>
+              <Text style={styles.menuText}>Ajuda</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.profileButton}>
+              <Text style={styles.butterfly}>🦋</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
 
+      {/* Conteúdo */}
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>Editar Produto</Text>
+        <View style={styles.titleArea}>
+          <Text style={styles.title}>Editar Produto</Text>
 
-        <Text style={styles.subtitle}>
-          Insira as informações abaixo para atualizar os dados do produto.
-        </Text>
+          <Text style={styles.subtitle}>
+            Insira as informações abaixo sobre o produto
+            {'\n'}a ser modificado.
+          </Text>
 
+          {/* Detalhe triangular do Figma */}
+          <View style={styles.cornerDecoration} />
+        </View>
+
+        {/* Formulário */}
         <View style={styles.form}>
           <Text style={styles.label}>Nome:</Text>
+
           <TextInput
             style={styles.input}
-            placeholder="Exemplo: Dados, Eletrônicos e etc."
-            placeholderTextColor="#999"
+            placeholder="Danone, Bis, Chocolate e etc."
+            placeholderTextColor="#A3A3A3"
             value={nome}
             onChangeText={setNome}
           />
 
           <Text style={styles.label}>Preço:</Text>
+
           <TextInput
             style={styles.input}
-            placeholder="Exemplo: R$ 14,50"
-            placeholderTextColor="#999"
+            placeholder="Exemplo: R$4,50"
+            placeholderTextColor="#A3A3A3"
             keyboardType="decimal-pad"
             value={preco}
             onChangeText={setPreco}
           />
 
           <Text style={styles.label}>Custo:</Text>
+
           <TextInput
             style={styles.input}
-            placeholder="Exemplo: R$ 12,00"
-            placeholderTextColor="#999"
+            placeholder="Exemplo: R$2,00"
+            placeholderTextColor="#A3A3A3"
             keyboardType="decimal-pad"
             value={custo}
             onChangeText={setCusto}
           />
 
           <Text style={styles.label}>Categoria:</Text>
+
           <TextInput
             style={styles.input}
-            placeholder="Exemplo: Bebidas, lanches, limpeza, etc."
-            placeholderTextColor="#999"
+            placeholder="Exemplo: bebida, lanche, limpeza, etc."
+            placeholderTextColor="#A3A3A3"
             value={categoria}
             onChangeText={setCategoria}
           />
         </View>
 
+        {/* Botão */}
         <TouchableOpacity
           style={styles.saveButton}
           onPress={handleSave}
@@ -129,66 +149,104 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
 
-  topMenuContainer: {
+  header: {
+    marginHorizontal: 14,
+    paddingTop: 8,
+    paddingBottom: 10,
+    borderBottomWidth: 2,
+    borderBottomColor: '#9747FF',
+  },
+
+  menu: {
+    gap: 5,
+  },
+
+  menuRow: {
     flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-    paddingVertical: 10,
-    paddingRight: 12,
+    gap: 7,
   },
 
-  topMenuScroll: {
-    paddingHorizontal: 12,
-    gap: 6,
-    alignItems: 'center',
-  },
-
-  topChip: {
+  menuButton: {
+    backgroundColor: '#9747FF',
     paddingHorizontal: 11,
     paddingVertical: 8,
-    borderRadius: 10,
-    backgroundColor: '#A855F7',
+    borderRadius: 9,
+    elevation: 3,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 1,
   },
 
-  activeChip: {
-    backgroundColor: '#9333EA',
+  activeButton: {
+    backgroundColor: '#9747FF',
   },
 
-  topChipText: {
+  menuText: {
     color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '500',
   },
 
-  activeChipText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+  profileButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#E5E5E5',
+    borderWidth: 1,
+    borderColor: '#9747FF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
-  profileChip: {
-    padding: 3,
-    marginLeft: 3,
+  butterfly: {
+    fontSize: 25,
   },
 
   content: {
-    paddingHorizontal: 24,
-    paddingTop: 25,
-    paddingBottom: 40,
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 35,
+  },
+
+  titleArea: {
+    position: 'relative',
+    marginBottom: 20,
+    paddingTop: 2,
+    minHeight: 78,
+    overflow: 'hidden',
   },
 
   title: {
-    fontSize: 23,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 8,
+    color: '#222222',
+    marginBottom: 6,
+    zIndex: 1,
   },
 
   subtitle: {
-    fontSize: 13,
-    color: '#6B7280',
-    marginBottom: 22,
-    lineHeight: 19,
+    fontSize: 10,
+    color: '#888888',
+    lineHeight: 14,
+    zIndex: 1,
+  },
+
+  cornerDecoration: {
+    position: 'absolute',
+    top: 0,
+    right: -20,
+    width: 0,
+    height: 0,
+    borderTopWidth: 0,
+    borderBottomWidth: 135,
+    borderLeftWidth: 65,
+    borderTopColor: 'transparent',
+    borderBottomColor: '#C084FC',
+    borderLeftColor: 'transparent',
+    transform: [{ rotate: '180deg' }],
   },
 
   form: {
@@ -196,36 +254,39 @@ const styles = StyleSheet.create({
   },
 
   label: {
-    fontSize: 14,
-    color: '#111827',
+    fontSize: 10,
+    color: '#222222',
     fontWeight: '600',
-    marginBottom: 7,
-    marginTop: 15,
+    marginBottom: 4,
+    marginTop: 5,
   },
 
   input: {
-    height: 48,
-    borderWidth: 1,
-    borderColor: '#A855F7',
+    height: 40,
+    width: '100%',
+    borderWidth: 1.3,
+    borderColor: '#9747FF',
     borderRadius: 10,
-    paddingHorizontal: 12,
-    fontSize: 13,
+    paddingHorizontal: 13,
+    fontSize: 11,
     color: '#333333',
+    backgroundColor: '#FFFFFF',
   },
 
   saveButton: {
-    backgroundColor: '#A855F7',
-    paddingVertical: 15,
-    borderRadius: 10,
+    height: 44,
+    backgroundColor: '#9747FF',
+    borderRadius: 9,
     alignItems: 'center',
-    marginTop: 25,
-    borderBottomWidth: 3,
-    borderBottomColor: '#9333EA',
+    justifyContent: 'center',
+    marginTop: 20,
+    borderBottomWidth: 4,
+    borderBottomColor: '#B77AFF',
   },
 
   saveButtonText: {
     color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: 'bold',
+    fontSize: 13,
+    fontWeight: '600',
   },
 });

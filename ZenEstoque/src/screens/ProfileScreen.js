@@ -14,8 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SessionManager } from '../services/session';
-
-const USERS_KEY = '@zen_estoques_users';
+import { USERS_KEY } from '../storage/storageKeys';
 
 export default function ProfileScreen({ navigation }) {
   const [nome, setNome] = useState('');
@@ -29,7 +28,7 @@ export default function ProfileScreen({ navigation }) {
 
   const loadUserData = async () => {
     try {
-      const loggedEmail = SessionManager.getLoggedUser();
+      const loggedEmail = await SessionManager.getLoggedUser();
       const usersJson = await AsyncStorage.getItem(USERS_KEY);
       const users = usersJson ? JSON.parse(usersJson) : [];
 

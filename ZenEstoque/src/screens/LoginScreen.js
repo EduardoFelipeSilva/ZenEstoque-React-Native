@@ -14,11 +14,8 @@ import {
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import api from '../services/api';
 import { SessionManager } from '../services/session';
-import { debugDatabase } from '../services/debugUsers';
 
 export default function LoginScreen({ navigation }) {
-  debugDatabase.listarTodos();
-  debugDatabase.verUsuarioLogado();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -57,15 +54,16 @@ export default function LoginScreen({ navigation }) {
     try {
       setPasswordError('');
 
-      const response = await api.post('/login', {
-        email,
-        password,
-      });
+    const response = await api.post('/login', {
+      email: email.trim().toLowerCase(),
+      password
+    });
 
-      console.log('Login bem-sucedido!', response.data);
+    await SessionManager.setLoggedUser(response.data.user.email);
 
-      SessionManager.setLoggedUser(email);
-      navigation.replace('Home');
+    navigation.replace('Home', {
+      userName: response.data.user.nome
+    });
 
     } catch (error) {
       setPasswordError('Credenciais inválidas.');

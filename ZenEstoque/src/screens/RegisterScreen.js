@@ -37,7 +37,7 @@ export default function RegisterScreen({ navigation }) {
     if (!email.trim()) {
       newErrors.email = 'O email é obrigatório.';
       isValid = false;
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       newErrors.email = 'Insira um formato de email válido.';
       isValid = false;
     }
@@ -103,7 +103,6 @@ export default function RegisterScreen({ navigation }) {
 
       const response = await api.post('/register', dados);
 
-      console.log('Status recebido:', response.status);
       console.log('Resposta recebida:', response.data);
 
       Alert.alert('Sucesso', 'Conta criada com sucesso!', [
