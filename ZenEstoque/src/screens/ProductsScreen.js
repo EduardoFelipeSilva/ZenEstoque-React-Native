@@ -120,7 +120,6 @@ export default function ProductsScreen({ navigation }) {
             </TouchableOpacity>
           </View>
         </View>
-      </View>
 
       {/* Conteúdo */}
       <ScrollView
