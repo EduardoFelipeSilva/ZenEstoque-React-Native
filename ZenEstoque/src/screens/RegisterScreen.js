@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   StyleSheet,
@@ -9,12 +8,15 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
+  StatusBar,
   ScrollView,
   Alert,
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/api';
+import { USERS_KEY } from '../storage/storageKeys';
 
 export default function RegisterScreen({ navigation }) {
   const [nome, setNome] = useState('');
@@ -24,6 +26,7 @@ export default function RegisterScreen({ navigation }) {
   const [senha, setSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const validateForm = () => {
     let isValid = true;
@@ -80,19 +83,31 @@ export default function RegisterScreen({ navigation }) {
     return isValid;
   };
 
+  const saveUserLocally = async (dados) => {
+    const usersJson = await AsyncStorage.getItem(USERS_KEY);
+    const users = usersJson ? JSON.parse(usersJson) : [];
+    const filteredUsers = users.filter((u) => u.email !== dados.email);
+    await AsyncStorage.setItem(
+      USERS_KEY,
+      JSON.stringify([...filteredUsers, dados])
+    );
+  };
+
   const handleRegister = async () => {
-    if (!validateForm()) {
+    if (!validateForm() || loading) {
       return;
     }
 
+    const dados = {
+      nome: nome.trim(),
+      email: email.trim().toLowerCase(),
+      telefone: telefone.replace(/\D/g, ''),
+      empresa: empresa.trim(),
+      senha,
+    };
+
     try {
-      const dados = {
-        nome: nome.trim(),
-        email: email.trim().toLowerCase(),
-        telefone: telefone.replace(/\D/g, ''),
-        empresa: empresa.trim(),
-        senha,
-      };
+      setLoading(true);
 
       console.log('Enviando cadastro:', {
         nome: dados.nome,
@@ -105,6 +120,8 @@ export default function RegisterScreen({ navigation }) {
 
       console.log('Resposta recebida:', response.data);
 
+      await saveUserLocally(dados);
+
       Alert.alert('Sucesso', 'Cadastro realizado com sucesso!', [
         {
           text: 'OK',
@@ -112,16 +129,47 @@ export default function RegisterScreen({ navigation }) {
         },
       ]);
     } catch (error) {
-      console.log('Mensagem do erro:', error.message);
-      console.log('Status do erro:', error.response?.status);
-      console.log('Dados do erro:', error.response?.data);
+      const errorResponse = error && error.response;
+      const errorData = errorResponse && errorResponse.data;
+
+      console.log('Mensagem do erro:', error && error.message);
+      console.log('Status do erro:', errorResponse && errorResponse.status);
+      console.log('Dados do erro:', errorData);
+
+      // Se a API estiver offline/inacessível no Snack, salva localmente no AsyncStorage
+      if (!errorResponse) {
+        try {
+          const usersJson = await AsyncStorage.getItem(USERS_KEY);
+          const users = usersJson ? JSON.parse(usersJson) : [];
+          const emailExists = users.some((u) => u.email === dados.email);
+
+          if (emailExists) {
+            Alert.alert('Erro', 'Este e-mail já está cadastrado.');
+            return;
+          }
+
+          await saveUserLocally(dados);
+
+          Alert.alert('Sucesso', 'Cadastro realizado com sucesso!', [
+            {
+              text: 'OK',
+              onPress: () => navigation.navigate('Login'),
+            },
+          ]);
+          return;
+        } catch (storageError) {
+          console.log('Erro ao salvar localmente:', storageError);
+        }
+      }
 
       Alert.alert(
         'Erro',
-        error.response?.data?.error ||
-          error.response?.data?.message ||
+        (errorData && errorData.error) ||
+          (errorData && errorData.message) ||
           'Não foi possível comunicar com a API'
       );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -137,7 +185,13 @@ export default function RegisterScreen({ navigation }) {
         >
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
+            onPress={() => {
+              if (navigation.canGoBack()) {
+                navigation.goBack();
+              } else {
+                navigation.navigate('Login');
+              }
+            }}
           >
             <Ionicons name="chevron-back" size={24} color="#9333EA" />
           </TouchableOpacity>
@@ -252,8 +306,11 @@ export default function RegisterScreen({ navigation }) {
           <TouchableOpacity
             style={styles.primaryButton}
             onPress={handleRegister}
+            disabled={loading}
           >
-            <Text style={styles.primaryButtonText}>Confirmar Cadastro</Text>
+            <Text style={styles.primaryButtonText}>
+              {loading ? 'Cadastrando...' : 'Confirmar Cadastro'}
+            </Text>
           </TouchableOpacity>
 
           <View style={styles.loginContainer}>
@@ -272,6 +329,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 10 : 0,
+    paddingBottom: Platform.OS === 'android' ? 16 : 0,
   },
 
   content: {
