@@ -1,4 +1,3 @@
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { USERS_KEY } from '../storage/storageKeys';
 
@@ -15,15 +14,15 @@ const api = {
         const users = usersJson ? JSON.parse(usersJson) : [];
 
         const userExists = users.some(
-          user => user.email.toLowerCase() === normalizedEmail
+          (user) => user.email?.toLowerCase() === normalizedEmail
         );
 
         if (userExists) {
           throw {
             response: {
               status: 409,
-              data: { error: 'Este email já está cadastrado.' }
-            }
+              data: { error: 'Este email já está cadastrado.' },
+            },
           };
         }
 
@@ -32,7 +31,7 @@ const api = {
           email: normalizedEmail,
           telefone,
           empresa,
-          senha
+          senha,
         };
 
         users.push(newUser);
@@ -44,8 +43,8 @@ const api = {
 
         return {
           data: {
-            message: 'Usuário cadastrado com sucesso!'
-          }
+            message: 'Usuário cadastrado com sucesso!',
+          },
         };
       } catch (error) {
         if (error.response) {
@@ -55,8 +54,8 @@ const api = {
         throw {
           response: {
             status: 500,
-            data: { error: 'Erro ao cadastrar localmente.' }
-          }
+            data: { error: 'Erro ao cadastrar localmente.' },
+          },
         };
       }
     }
@@ -72,8 +71,8 @@ const api = {
         const users = usersJson ? JSON.parse(usersJson) : [];
 
         const user = users.find(
-          item =>
-            item.email.toLowerCase() === normalizedEmail &&
+          (item) =>
+            item.email?.toLowerCase() === normalizedEmail &&
             item.senha === password
         );
 
@@ -81,8 +80,8 @@ const api = {
           throw {
             response: {
               status: 401,
-              data: { error: 'Credenciais inválidas.' }
-            }
+              data: { error: 'Credenciais inválidas.' },
+            },
           };
         }
 
@@ -93,9 +92,9 @@ const api = {
               nome: user.nome,
               email: user.email,
               telefone: user.telefone,
-              empresa: user.empresa
-            }
-          }
+              empresa: user.empresa,
+            },
+          },
         };
       } catch (error) {
         if (error.response) {
@@ -105,14 +104,53 @@ const api = {
         throw {
           response: {
             status: 500,
-            data: { error: 'Erro ao realizar login.' }
-          }
+            data: { error: 'Erro ao realizar login.' },
+          },
+        };
+      }
+    }
+
+    // RECUPERAÇÃO DE SENHA
+    if (endpoint === '/forgot-password') {
+      try {
+        const normalizedEmail = bodyData.email?.trim().toLowerCase();
+        const usersJson = await AsyncStorage.getItem(USERS_KEY);
+        const users = usersJson ? JSON.parse(usersJson) : [];
+
+        const userExists = users.some(
+          (item) => item.email?.toLowerCase() === normalizedEmail
+        );
+
+        if (!userExists) {
+          throw {
+            response: {
+              status: 404,
+              data: { error: 'Nenhuma conta encontrada com este e-mail.' },
+            },
+          };
+        }
+
+        return {
+          data: {
+            message: 'Instruções de recuperação enviadas com sucesso!',
+          },
+        };
+      } catch (error) {
+        if (error.response) {
+          throw error;
+        }
+
+        throw {
+          response: {
+            status: 500,
+            data: { error: 'Erro ao processar recuperação de senha.' },
+          },
         };
       }
     }
 
     throw new Error(`Endpoint não encontrado: ${endpoint}`);
-  }
+  },
 };
 
 export default api;
