@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   StyleSheet,
@@ -8,13 +7,21 @@ import {
   SafeAreaView,
   ScrollView,
   Alert,
+  Platform,
+  StatusBar,
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
 
-export default function HelpScreen({ navigation }) {
+export default function HelpScreen({ route, navigation }) {
+  const userName = (route && route.params && route.params.userName) || 'usuário';
+
+  const navigateTo = (screen) => {
+    navigation.navigate(screen, { userName });
+  };
+
   const handleProfilePress = () => {
-    navigation.navigate('Profile');
+    navigation.navigate('Profile', { userName });
   };
 
   const handleContactPress = () => {
@@ -46,30 +53,45 @@ export default function HelpScreen({ navigation }) {
           <View style={styles.menuRow}>
             <TouchableOpacity
               style={styles.menuButton}
-              onPress={() => navigation.navigate('Home')}
+              onPress={() => navigateTo('Home')}
             >
               <Text style={styles.menuText}>Home</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuButton}>
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => navigateTo('Products')}
+            >
               <Text style={styles.menuText}>Dashboard</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuButton}>
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => navigateTo('Products')}
+            >
               <Text style={styles.menuText}>Produtos</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.menuRow}>
-            <TouchableOpacity style={styles.menuButton}>
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => navigateTo('Sales')}
+            >
               <Text style={styles.menuText}>Vendas</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuButton}>
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => navigateTo('EditProduct')}
+            >
               <Text style={styles.menuText}>Editar</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuButton}>
+            <TouchableOpacity
+              style={styles.menuButton}
+              activeOpacity={1}
+            >
               <Text style={styles.menuText}>Ajuda</Text>
             </TouchableOpacity>
 
@@ -149,6 +171,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 10 : 0,
+    paddingBottom: Platform.OS === 'android' ? 16 : 0,
   },
 
   header: {
@@ -157,7 +181,7 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     borderBottomWidth: 2,
     borderBottomColor: '#9747FF',
-    marginHorizontal: 12,
+    marginHorizontal: 16,
   },
 
   menu: {
