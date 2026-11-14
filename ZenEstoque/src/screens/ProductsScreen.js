@@ -33,7 +33,7 @@ const products = [
 
 const ITEMS_PER_PAGE = 6;
 
-export default function ProductsScreen() {
+export default function ProductsScreen({ navigation }) {
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -76,7 +76,10 @@ export default function ProductsScreen() {
       <View style={styles.header}>
         <View style={styles.menu}>
           <View style={styles.menuRow}>
-            <TouchableOpacity style={styles.menuButton}>
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => navigation.navigate('Home')}
+            >
               <Text style={styles.menuText}>Home</Text>
             </TouchableOpacity>
 
@@ -91,16 +94,24 @@ export default function ProductsScreen() {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.menuRow}>
-            <TouchableOpacity style={styles.menuButton}>
-              <Text style={styles.menuText}>Vendas</Text>
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={() => navigation.navigate('Sales')}
+          >
+            <Text style={styles.menuText}>Venda</Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuButton}>
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => navigation.navigate('EditProduct')}
+            >
               <Text style={styles.menuText}>Editar</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuButton}>
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => navigation.navigate('Help')}
+            >
               <Text style={styles.menuText}>Ajuda</Text>
             </TouchableOpacity>
 

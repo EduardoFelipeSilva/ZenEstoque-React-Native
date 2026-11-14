@@ -21,17 +21,30 @@ export default function HomeScreen({ route, navigation }) {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.topMenuScroll}
         >
-          {['Home', 'Dashboard', 'Produtos', 'Vendas', 'Editar', 'Ajuda'].map((item) => (
-            <View
-              key={item}
-              style={[
-                styles.topChip,
-                item === 'Home' && styles.activeChip,
-              ]}
-            >
-              <Text style={styles.topChipText}>{item}</Text>
-            </View>
-          ))}
+          {[
+              { label: 'Home', screen: 'Home' },
+              { label: 'Dashboard', screen: null },
+              { label: 'Produtos', screen: 'Products' },
+              { label: 'Vendas', screen: 'Sales' },
+              { label: 'Editar', screen: 'EditProduct' },
+              { label: 'Ajuda', screen: 'Help' },
+            ].map((item) => (
+              <TouchableOpacity
+                key={item.label}
+                style={[
+                  styles.topChip,
+                  item.label === 'Home' && styles.activeChip,
+                ]}
+                disabled={!item.screen}
+                onPress={() => {
+                  if (item.screen && item.screen !== 'Home') {
+                    navigation.navigate(item.screen);
+                  }
+                }}
+              >
+                <Text style={styles.topChipText}>{item.label}</Text>
+              </TouchableOpacity>
+            ))}
         </ScrollView>
 
         <TouchableOpacity

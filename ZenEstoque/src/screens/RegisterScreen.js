@@ -105,7 +105,7 @@ export default function RegisterScreen({ navigation }) {
 
       console.log('Resposta recebida:', response.data);
 
-      Alert.alert('Sucesso', 'Conta criada com sucesso!', [
+      Alert.alert('Sucesso', 'Cadastro realizado com sucesso!', [
         {
           text: 'OK',
           onPress: () => navigation.navigate('Login'),
