@@ -1,26 +1,92 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
+  SafeAreaView,
   Text,
   View,
   TextInput,
   TouchableOpacity,
-  SafeAreaView,
   ScrollView,
   Alert,
+  Platform,
+  StatusBar,
 } from 'react-native';
 
-export default function EditProductScreen({ navigation }) {
+export default function EditProductScreen({ route, navigation }) {
+  const userName = route?.params?.userName || 'usuário';
+  const productToEdit = route?.params?.product || null;
+  const isCreateMode = route?.params?.mode === 'create';
+
   const [nome, setNome] = useState('');
   const [preco, setPreco] = useState('');
   const [custo, setCusto] = useState('');
   const [categoria, setCategoria] = useState('');
 
+  // Preenche os campos automaticamente se um produto foi enviado para edição
+  useEffect(() => {
+    if (productToEdit) {
+      setNome(productToEdit.nome || '');
+      setPreco(
+        productToEdit.valor !== undefined
+          ? String(productToEdit.valor).replace('.', ',')
+          : ''
+      );
+      setCusto(
+        productToEdit.custo !== undefined
+          ? String(productToEdit.custo).replace('.', ',')
+          : ''
+      );
+      setCategoria(productToEdit.tipo || productToEdit.categoria || '');
+    } else {
+      setNome('');
+      setPreco('');
+      setCusto('');
+      setCategoria('');
+    }
+  }, [productToEdit]);
+
+  const navigateTo = (screen) => {
+    navigation.navigate(screen, { userName });
+  };
+
   const handleSave = () => {
+    if (!nome.trim() || !preco.trim() || !custo.trim() || !categoria.trim()) {
+      Alert.alert('Atenção', 'Preencha todos os campos antes de salvar.');
+      return;
+    }
+
+    const parsedValor = parseFloat(preco.replace('R$', '').replace(',', '.').trim());
+    const parsedCusto = parseFloat(custo.replace('R$', '').replace(',', '.').trim());
+
+    if (isNaN(parsedValor) || isNaN(parsedCusto)) {
+      Alert.alert('Valor inválido', 'Informe números válidos para Preço e Custo.');
+      return;
+    }
+
+    const savedProduct = {
+      id: productToEdit?.id || String(Date.now()),
+      nome: nome.trim(),
+      tipo: categoria.trim(),
+      custo: parsedCusto,
+      valor: parsedValor,
+    };
+
     Alert.alert(
-      'Tela de edição',
-      'O formulário está pronto. A integração para salvar o produto será feita posteriormente.'
+      'Sucesso',
+      isCreateMode
+        ? 'Produto cadastrado com sucesso!'
+        : 'Alterações salvas com sucesso!',
+      [
+        {
+          text: 'OK',
+          onPress: () =>
+            navigation.navigate('Products', {
+              userName,
+              savedProduct,
+              isNew: !productToEdit,
+            }),
+        },
+      ]
     );
   };
 
@@ -32,36 +98,52 @@ export default function EditProductScreen({ navigation }) {
           <View style={styles.menuRow}>
             <TouchableOpacity
               style={styles.menuButton}
-              onPress={() => navigation.navigate('Home')}
+              onPress={() => navigateTo('Home')}
             >
               <Text style={styles.menuText}>Home</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuButton}>
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => navigateTo('Products')}
+            >
               <Text style={styles.menuText}>Dashboard</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuButton}>
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => navigateTo('Products')}
+            >
               <Text style={styles.menuText}>Produtos</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.menuRow}>
-            <TouchableOpacity style={styles.menuButton}>
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => navigateTo('Sales')}
+            >
               <Text style={styles.menuText}>Vendas</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.menuButton, styles.activeButton]}
+              activeOpacity={1}
             >
               <Text style={styles.menuText}>Editar</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuButton}>
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => navigateTo('Help')}
+            >
               <Text style={styles.menuText}>Ajuda</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.profileButton}>
+            <TouchableOpacity
+              style={styles.profileButton}
+              onPress={() => navigateTo('Profile')}
+            >
               <Text style={styles.butterfly}>🦋</Text>
             </TouchableOpacity>
           </View>
@@ -74,11 +156,14 @@ export default function EditProductScreen({ navigation }) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.titleArea}>
-          <Text style={styles.title}>Editar Produto</Text>
+          <Text style={styles.title}>
+            {isCreateMode ? 'Cadastrar Produto' : 'Editar Produto'}
+          </Text>
 
           <Text style={styles.subtitle}>
-            Insira as informações abaixo sobre o produto
-            {'\n'}a ser modificado.
+            {isCreateMode
+              ? 'Insira as informações abaixo sobre o produto\na ser cadastrado.'
+              : 'Insira as informações abaixo sobre o produto\na ser modificado.'}
           </Text>
 
           {/* Detalhe triangular do Figma */}
@@ -136,7 +221,9 @@ export default function EditProductScreen({ navigation }) {
           onPress={handleSave}
           activeOpacity={0.8}
         >
-          <Text style={styles.saveButtonText}>Salvar Alterações</Text>
+          <Text style={styles.saveButtonText}>
+            {isCreateMode ? 'Cadastrar Produto' : 'Salvar Alterações'}
+          </Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -147,10 +234,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 10 : 0,
+    paddingBottom: Platform.OS === 'android' ? 16 : 0,
   },
 
   header: {
-    marginHorizontal: 14,
+    marginHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 10,
     borderBottomWidth: 2,
@@ -206,7 +295,7 @@ const styles = StyleSheet.create({
   },
 
   content: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 14,
     paddingBottom: 35,
   },
