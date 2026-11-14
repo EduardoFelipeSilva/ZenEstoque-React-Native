@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   SafeAreaView,
@@ -6,14 +5,67 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
+  Alert,
+  Platform,
+  StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SessionManager } from '../services/session';
 
-export default function ProfileModalScreen() {
+export default function ProfileModalScreen({ route, navigation }) {
+  const userName = (route && route.params && route.params.userName) || 'usuário';
+
+  const handleClose = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate('Home', { userName });
+    }
+  };
+
+  const handleEditProfile = () => {
+    navigation.navigate('Profile', { userName });
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Sair da conta',
+      'Deseja realmente encerrar sua sessão?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Sair',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              if (SessionManager && SessionManager.clearSession) {
+                await SessionManager.clearSession();
+              } else if (SessionManager && SessionManager.logout) {
+                await SessionManager.logout();
+              }
+            } catch (error) {
+              console.log('Erro ao limpar sessão:', error);
+            }
+
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Welcome' }],
+            });
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.overlay}>
         <View style={styles.modal}>
+          {/* Botão Fechar */}
+          <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+            <Ionicons name="close" size={24} color="#DC2626" />
+          </TouchableOpacity>
+
           {/* Cabeçalho */}
           <View style={styles.header}>
             <Text style={styles.title}>Perfil</Text>
@@ -25,7 +77,7 @@ export default function ProfileModalScreen() {
           </View>
 
           {/* Editar perfil */}
-          <TouchableOpacity style={styles.option}>
+          <TouchableOpacity style={styles.option} onPress={handleEditProfile}>
             <Ionicons
               name="person-outline"
               size={22}
@@ -44,7 +96,7 @@ export default function ProfileModalScreen() {
           <View style={styles.divider} />
 
           {/* Sair */}
-          <TouchableOpacity style={styles.option}>
+          <TouchableOpacity style={styles.option} onPress={handleLogout}>
             <Ionicons
               name="log-out-outline"
               size={22}
@@ -69,6 +121,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 10 : 0,
+    paddingBottom: Platform.OS === 'android' ? 16 : 0,
   },
 
   overlay: {
@@ -92,6 +146,10 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.15,
     shadowRadius: 5,
+  },
+
+  closeButton: {
+    alignSelf: 'flex-end',
   },
 
   header: {
