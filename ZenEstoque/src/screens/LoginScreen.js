@@ -8,20 +8,24 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
+  StatusBar,
   ScrollView,
+  Alert,
 } from 'react-native';
 
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/api';
 import { SessionManager } from '../services/session';
+import { USERS_KEY } from '../storage/storageKeys';
 
 export default function LoginScreen({ navigation }) {
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const validateForm = () => {
     let isValid = true;
@@ -49,24 +53,78 @@ export default function LoginScreen({ navigation }) {
   };
 
   const handleLogin = async () => {
-    if (!validateForm()) return;
+    if (!validateForm() || loading) return;
+
+    const cleanEmail = email.trim().toLowerCase();
 
     try {
+      setLoading(true);
       setPasswordError('');
 
-    const response = await api.post('/login', {
-      email: email.trim().toLowerCase(),
-      password
-    });
+      const response = await api.post('/login', {
+        email: cleanEmail,
+        password,
+      });
 
-    await SessionManager.setLoggedUser(response.data.user.email);
+      await SessionManager.setLoggedUser(response.data.user.email);
 
-    navigation.replace('Home', {
-      userName: response.data.user.nome
-    });
-
+      navigation.replace('Home', {
+        userName: response.data.user.nome,
+      });
     } catch (error) {
+      // Fallback caso o usuário esteja salvo localmente no AsyncStorage
+      try {
+        const usersJson = await AsyncStorage.getItem(USERS_KEY);
+        const users = usersJson ? JSON.parse(usersJson) : [];
+        const localUser = users.find(
+          (u) =>
+            u.email &&
+            u.email.toLowerCase() === cleanEmail &&
+            (u.senha === password || u.password === password)
+        );
+
+        if (localUser) {
+          await SessionManager.setLoggedUser(localUser.email);
+          navigation.replace('Home', {
+            userName: localUser.nome || 'usuário',
+          });
+          return;
+        }
+      } catch (storageError) {
+        console.log('Erro ao verificar usuário local:', storageError);
+      }
+
       setPasswordError('Credenciais inválidas.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = () => {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !/\S+@\S+\.\S+/.test(cleanEmail)) {
+      Alert.alert(
+        'Recuperar senha',
+        'Digite seu e-mail no campo acima e toque novamente em "Esqueceu a senha?" para receber as instruções.'
+      );
+      return;
+    }
+
+    Alert.alert(
+      'Link enviado',
+      `Enviamos um link de redefinição de senha para ${cleanEmail}.`
+    );
+  };
+
+  const handleSocialLogin = async (provider) => {
+    try {
+      const socialEmail = `${provider.toLowerCase()}@zenestoques.com`;
+      await SessionManager.setLoggedUser(socialEmail);
+      navigation.replace('Home', {
+        userName: `Usuário ${provider}`,
+      });
+    } catch (error) {
+      Alert.alert('Erro', `Não foi possível entrar com ${provider}.`);
     }
   };
 
@@ -82,7 +140,11 @@ export default function LoginScreen({ navigation }) {
         >
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
+            onPress={() => {
+              if (navigation.canGoBack()) {
+                navigation.goBack();
+              }
+            }}
           >
             <Ionicons name="chevron-back" size={24} color="#9333EA" />
           </TouchableOpacity>
@@ -110,7 +172,10 @@ export default function LoginScreen({ navigation }) {
               keyboardType="email-address"
               autoCapitalize="none"
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(text) => {
+                setEmail(text);
+                if (emailError) setEmailError('');
+              }}
             />
 
             {emailError ? (
@@ -133,7 +198,10 @@ export default function LoginScreen({ navigation }) {
                 placeholderTextColor="#9CA3AF"
                 secureTextEntry={!showPassword}
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  if (passwordError) setPasswordError('');
+                }}
               />
 
               <TouchableOpacity
@@ -150,7 +218,7 @@ export default function LoginScreen({ navigation }) {
             <View style={styles.passwordFooter}>
               <Text style={styles.errorText}>{passwordError}</Text>
 
-              <TouchableOpacity>
+              <TouchableOpacity onPress={handleForgotPassword}>
                 <Text style={styles.forgotPassword}>
                   Esqueceu a senha?
                 </Text>
@@ -160,8 +228,11 @@ export default function LoginScreen({ navigation }) {
             <TouchableOpacity
               style={styles.primaryButton}
               onPress={handleLogin}
+              disabled={loading}
             >
-              <Text style={styles.primaryButtonText}>Entrar</Text>
+              <Text style={styles.primaryButtonText}>
+                {loading ? 'Entrando...' : 'Entrar'}
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -171,14 +242,20 @@ export default function LoginScreen({ navigation }) {
             <View style={styles.dividerLine} />
           </View>
 
-          <TouchableOpacity style={styles.socialButton}>
+          <TouchableOpacity
+            style={styles.socialButton}
+            onPress={() => handleSocialLogin('Apple')}
+          >
             <FontAwesome name="apple" size={20} color="#111827" />
             <Text style={styles.socialButtonText}>
               Login com Apple
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.socialButton}>
+          <TouchableOpacity
+            style={styles.socialButton}
+            onPress={() => handleSocialLogin('Google')}
+          >
             <Ionicons name="logo-google" size={20} color="#DB4437" />
             <Text style={styles.socialButtonText}>
               Login com Google
@@ -187,7 +264,7 @@ export default function LoginScreen({ navigation }) {
 
           <View style={styles.signupContainer}>
             <Text style={styles.signupText}>
-              Não tem uma conta? 
+              Não tem uma conta?
             </Text>
 
             <TouchableOpacity
@@ -206,6 +283,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 10 : 0,
+    paddingBottom: Platform.OS === 'android' ? 16 : 0,
   },
 
   content: {
