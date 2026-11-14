@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   SafeAreaView,
@@ -6,16 +5,32 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
+  Platform,
+  StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function SuccessScreen() {
+export default function SuccessScreen({ route, navigation }) {
+  const userName = (route && route.params && route.params.userName) || 'usuário';
+
+  const handleBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate('Home', { userName });
+    }
+  };
+
+  const handleContinue = () => {
+    navigation.navigate('Home', { userName });
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.backButton}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
           <Ionicons name="chevron-back" size={22} color="#333333" />
-        </View>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.logoContainer}>
@@ -38,7 +53,7 @@ export default function SuccessScreen() {
         </Text>
       </View>
 
-      <TouchableOpacity style={styles.continueButton}>
+      <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
         <Text style={styles.continueText}>Continuar</Text>
       </TouchableOpacity>
     </SafeAreaView>
@@ -49,7 +64,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 17,
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 10 : 0,
+    paddingBottom: Platform.OS === 'android' ? 16 : 0,
   },
 
   header: {
