@@ -1,8 +1,7 @@
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   USERS_KEY,
-  LOGGED_USER_KEY
+  LOGGED_USER_KEY,
 } from '../storage/storageKeys';
 
 export const debugDatabase = {
@@ -13,7 +12,7 @@ export const debugDatabase = {
       const users = usersJson ? JSON.parse(usersJson) : [];
 
       // Não exibir senhas no console
-      const safeUsers = users.map(({ senha, ...user }) => user);
+      const safeUsers = users.map(({ senha, password, ...user }) => user);
 
       console.log(
         '📦 [DATABASE] Usuários cadastrados:',
@@ -44,17 +43,24 @@ export const debugDatabase = {
     }
   },
 
+  // Inspecionar usuários e sessão de uma só vez
+  inspecionarTudo: async () => {
+    const usuarios = await debugDatabase.listarTodos();
+    const usuarioLogado = await debugDatabase.verUsuarioLogado();
+    return { usuarios, usuarioLogado };
+  },
+
   // Limpar dados de desenvolvimento
   limparBanco: async () => {
     try {
       await AsyncStorage.multiRemove([
         USERS_KEY,
-        LOGGED_USER_KEY
+        LOGGED_USER_KEY,
       ]);
 
       console.log('🗑️ [DATABASE] Base de dados limpa com sucesso!');
     } catch (error) {
       console.log('❌ [DATABASE] Erro ao limpar base de dados:', error);
     }
-  }
+  },
 };
