@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -7,14 +6,59 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
+  Alert,
+  Platform,
+  StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function SalesScreen() {
+const SALES_DATA = [
+  { period: 'Este Mês', totalSales: '5.423', salesTrend: '↑16% esse mês', monthlyProfit: '1.893', profitTrend: '↓14% esse mês' },
+  { period: 'Mês Anterior', totalSales: '4.675', salesTrend: '↑8% mês passado', monthlyProfit: '2.201', profitTrend: '↑5% mês passado' },
+  { period: 'Trimestre', totalSales: '14.890', salesTrend: '↑21% no trimestre', monthlyProfit: '5.740', profitTrend: '↑11% no trimestre' },
+];
+
+export default function SalesScreen({ route, navigation }) {
+  const userName = (route && route.params && route.params.userName) || 'usuário';
+  const [periodIndex, setPeriodIndex] = useState(0);
+
+  const currentData = SALES_DATA[periodIndex];
+
   const menuRows = [
-    ['Home', 'Dashboard', 'Produtos'],
-    ['Vendas', 'Editar', 'Ajuda'],
+    [
+      { label: 'Home', screen: 'Home' },
+      { label: 'Dashboard', screen: 'Products' },
+      { label: 'Produtos', screen: 'Products' },
+    ],
+    [
+      { label: 'Vendas', screen: 'Sales' },
+      { label: 'Editar', screen: 'EditProduct' },
+      { label: 'Ajuda', screen: 'Help' },
+    ],
   ];
+
+  const handleNavigate = (screen) => {
+    if (!screen || screen === 'Sales') return;
+    navigation.navigate(screen, { userName });
+  };
+
+  const handleConsult = () => {
+    Alert.alert(
+      'Consultar Vendas',
+      `Período atual: ${currentData.period}\nEscolha uma opção:`,
+      [
+        {
+          text: 'Alternar Período',
+          onPress: () => setPeriodIndex((prev) => (prev + 1) % SALES_DATA.length),
+        },
+        {
+          text: 'Ver Produtos',
+          onPress: () => navigation.navigate('Products', { userName, mode: 'view' }),
+        },
+        { text: 'Fechar', style: 'cancel' },
+      ]
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -24,21 +68,26 @@ export default function SalesScreen() {
           {menuRows.map((row, index) => (
             <View key={index} style={styles.menuRow}>
               {row.map((item) => (
-                <View
-                  key={item}
+                <TouchableOpacity
+                  key={item.label}
                   style={[
                     styles.topChip,
-                    item === 'Vendas' && styles.activeChip,
+                    item.label === 'Vendas' && styles.activeChip,
                   ]}
+                  activeOpacity={item.label === 'Vendas' ? 1 : 0.7}
+                  onPress={() => handleNavigate(item.screen)}
                 >
-                  <Text style={styles.topChipText}>{item}</Text>
-                </View>
+                  <Text style={styles.topChipText}>{item.label}</Text>
+                </TouchableOpacity>
               ))}
 
               {index === 1 && (
-                <View style={styles.profileChip}>
+                <TouchableOpacity
+                  style={styles.profileChip}
+                  onPress={() => navigation.navigate('Profile', { userName })}
+                >
                   <Text style={styles.profileIcon}>🦋</Text>
-                </View>
+                </TouchableOpacity>
               )}
             </View>
           ))}
@@ -52,10 +101,10 @@ export default function SalesScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.title}>Vendas</Text>
-        <Text style={styles.greeting}>Olá usuário</Text>
+        <Text style={styles.greeting}>Olá {userName}</Text>
 
         {/* Consultar */}
-        <TouchableOpacity style={styles.consultButton}>
+        <TouchableOpacity style={styles.consultButton} onPress={handleConsult}>
           <Ionicons name="search-outline" size={22} color="#222222" />
           <Text style={styles.consultText}>Consultar</Text>
         </TouchableOpacity>
@@ -67,8 +116,8 @@ export default function SalesScreen() {
           </View>
 
           <Text style={styles.cardTitle}>Total de Venda</Text>
-          <Text style={styles.cardValue}>5.423</Text>
-          <Text style={styles.positive}>↑16% esse mês</Text>
+          <Text style={styles.cardValue}>{currentData.totalSales}</Text>
+          <Text style={styles.positive}>{currentData.salesTrend}</Text>
         </View>
 
         {/* Card de lucro */}
@@ -76,8 +125,8 @@ export default function SalesScreen() {
           <Text style={styles.profitIcon}>🏷️</Text>
 
           <Text style={styles.cardTitle}>Lucro Mensal</Text>
-          <Text style={styles.cardValue}>1.893</Text>
-          <Text style={styles.negative}>↓14% esse mês</Text>
+          <Text style={styles.cardValue}>{currentData.monthlyProfit}</Text>
+          <Text style={styles.negative}>{currentData.profitTrend}</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -88,12 +137,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 10 : 0,
+    paddingBottom: Platform.OS === 'android' ? 16 : 0,
   },
 
   topMenuContainer: {
     paddingTop: 9,
     paddingBottom: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
   },
 
   menuRows: {
@@ -143,7 +194,7 @@ const styles = StyleSheet.create({
   purpleLine: {
     height: 2,
     backgroundColor: '#A855F7',
-    marginHorizontal: 12,
+    marginHorizontal: 16,
   },
 
   content: {
