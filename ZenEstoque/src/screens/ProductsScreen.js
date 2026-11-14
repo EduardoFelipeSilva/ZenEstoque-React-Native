@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -8,10 +7,15 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Alert,
+  Platform,
+  StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { PRODUCTS_KEY } from '../storage/storageKeys';
 
-const products = [
+const initialProducts = [
   { id: 1, name: 'Tomate Italiano', category: 'Legumes', price: 'R$ 8,50', cost: 'R$ 5,00', expiry: '12/11/2026' },
   { id: 2, name: 'Banana Prata', category: 'Frutas', price: 'R$ 6,00', cost: 'R$ 3,50', expiry: '11/11/2026' },
   { id: 3, name: 'Maçã Fuji', category: 'Frutas', price: 'R$ 9,90', cost: 'R$ 6,00', expiry: '15/11/2026' },
@@ -33,18 +37,104 @@ const products = [
 
 const ITEMS_PER_PAGE = 6;
 
-export default function ProductsScreen({ navigation }) {
+const formatCurrency = (value) => {
+  if (typeof value === 'string' && value.includes('R$')) return value;
+  const num = Number(value);
+  if (isNaN(num)) return 'R$ 0,00';
+  return `R$ ${num.toFixed(2).replace('.', ',')}`;
+};
+
+const parseCurrencyNumber = (value) => {
+  if (typeof value === 'number') return value;
+  if (!value) return '';
+  return parseFloat(String(value).replace('R$', '').replace(',', '.').trim());
+};
+
+export default function ProductsScreen({ route, navigation }) {
+  const params = (route && route.params) || {};
+  const userName = params.userName || 'usuário';
+  const mode = params.mode || 'view';
+  const savedProduct = params.savedProduct;
+
+  const [productsList, setProductsList] = useState(initialProducts);
+  const [isStorageLoaded, setIsStorageLoaded] = useState(false);
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(search.toLowerCase())
+  // Carrega os produtos salvos no AsyncStorage ao abrir a tela
+  useEffect(() => {
+    const loadStoredProducts = async () => {
+      try {
+        const stored = await AsyncStorage.getItem(PRODUCTS_KEY);
+        if (stored) {
+          setProductsList(JSON.parse(stored));
+        } else {
+          await AsyncStorage.setItem(PRODUCTS_KEY, JSON.stringify(initialProducts));
+        }
+      } catch (error) {
+        console.log('Erro ao carregar produtos salvos:', error);
+      } finally {
+        setIsStorageLoaded(true);
+      }
+    };
+
+    loadStoredProducts();
+  }, []);
+
+  // Salva automaticamente no AsyncStorage sempre que a lista for alterada
+  useEffect(() => {
+    if (!isStorageLoaded) return;
+
+    AsyncStorage.setItem(PRODUCTS_KEY, JSON.stringify(productsList)).catch((error) =>
+      console.log('Erro ao salvar produtos:', error)
+    );
+  }, [productsList, isStorageLoaded]);
+
+  // Recebe produto cadastrado ou editado vindo da EditProductScreen
+  useEffect(() => {
+    if (savedProduct) {
+      const rawCost = savedProduct.custo !== undefined ? savedProduct.custo : savedProduct.cost;
+      const rawPrice = savedProduct.valor !== undefined ? savedProduct.valor : savedProduct.price;
+
+      const formattedItem = {
+        id: savedProduct.id,
+        name: savedProduct.nome || savedProduct.name,
+        category: savedProduct.tipo || savedProduct.category,
+        cost: formatCurrency(rawCost),
+        price: formatCurrency(rawPrice),
+        expiry: savedProduct.expiry || '30/11/2026',
+      };
+
+      setProductsList((prev) => {
+        const exists = prev.some((item) => String(item.id) === String(formattedItem.id));
+        if (exists) {
+          return prev.map((item) =>
+            String(item.id) === String(formattedItem.id) ? formattedItem : item
+          );
+        }
+        return [formattedItem, ...prev];
+      });
+
+      navigation.setParams({ savedProduct: null });
+    }
+  }, [savedProduct, navigation]);
+
+  const filteredProducts = productsList.filter(
+    (product) =>
+      product.name.toLowerCase().includes(search.toLowerCase()) ||
+      product.category.toLowerCase().includes(search.toLowerCase())
   );
 
   const totalPages = Math.max(
     1,
     Math.ceil(filteredProducts.length / ITEMS_PER_PAGE)
   );
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
 
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
 
@@ -70,6 +160,42 @@ export default function ProductsScreen({ navigation }) {
     }
   };
 
+  const handleEditProduct = (product) => {
+    navigation.navigate('EditProduct', {
+      userName,
+      mode: 'edit',
+      product: {
+        id: product.id,
+        nome: product.name,
+        tipo: product.category,
+        custo: parseCurrencyNumber(product.cost),
+        valor: parseCurrencyNumber(product.price),
+        expiry: product.expiry,
+      },
+    });
+  };
+
+  const handleDeleteProduct = (product) => {
+    Alert.alert(
+      'Remover Produto',
+      `Deseja remover "${product.name}" do sistema?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Remover',
+          style: 'destructive',
+          onPress: () => {
+            setProductsList((prev) => prev.filter((item) => item.id !== product.id));
+          },
+        },
+      ]
+    );
+  };
+
+  const navigateTo = (screen, extraParams = {}) => {
+    navigation.navigate(screen, { userName, ...extraParams });
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Menu superior */}
@@ -78,55 +204,78 @@ export default function ProductsScreen({ navigation }) {
           <View style={styles.menuRow}>
             <TouchableOpacity
               style={styles.menuButton}
-              onPress={() => navigation.navigate('Home')}
+              onPress={() => navigateTo('Home')}
             >
               <Text style={styles.menuText}>Home</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuButton}>
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => navigateTo('Products')}
+            >
               <Text style={styles.menuText}>Dashboard</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.menuButton, styles.activeButton]}
+              activeOpacity={1}
             >
               <Text style={styles.menuText}>Produtos</Text>
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity
-            style={styles.menuButton}
-            onPress={() => navigation.navigate('Sales')}
-          >
-            <Text style={styles.menuText}>Venda</Text>
-          </TouchableOpacity>
+          <View style={styles.menuRow}>
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => navigateTo('Sales')}
+            >
+              <Text style={styles.menuText}>Vendas</Text>
+            </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.menuButton}
-              onPress={() => navigation.navigate('EditProduct')}
+              onPress={() => navigateTo('EditProduct')}
             >
               <Text style={styles.menuText}>Editar</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.menuButton}
-              onPress={() => navigation.navigate('Help')}
+              onPress={() => navigateTo('Help')}
             >
               <Text style={styles.menuText}>Ajuda</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.profileButton}>
+            <TouchableOpacity
+              style={styles.profileButton}
+              onPress={() => navigateTo('Profile')}
+            >
               <Text style={styles.butterfly}>🦋</Text>
             </TouchableOpacity>
           </View>
         </View>
+      </View>
 
       {/* Conteúdo */}
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>Produtos no sistema</Text>
+        {/* Linha Olá usuário + Botão Novo (Figma) */}
+        <View style={styles.topUserBar}>
+          <Text style={styles.greetingText}>Olá {userName}</Text>
+
+          <TouchableOpacity
+            style={styles.newButton}
+            onPress={() => navigateTo('EditProduct', { mode: 'create', product: null })}
+          >
+            <Text style={styles.newButtonText}>Novo</Text>
+          </TouchableOpacity>
+        </View>
+
+        <Text style={styles.title}>
+          {mode === 'delete' ? 'Selecione um produto para remover' : 'Produtos no sistema'}
+        </Text>
 
         {/* Pesquisa */}
         <View style={styles.searchArea}>
@@ -198,11 +347,19 @@ export default function ProductsScreen({ navigation }) {
                   </Text>
 
                   <View style={[styles.actionColumn, styles.actionCell]}>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => handleEditProduct(product)}>
                       <Ionicons
                         name="create-outline"
-                        size={20}
+                        size={19}
                         color="#222222"
+                      />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity onPress={() => handleDeleteProduct(product)}>
+                      <Ionicons
+                        name="trash-outline"
+                        size={18}
+                        color={mode === 'delete' ? '#DC2626' : '#666666'}
                       />
                     </TouchableOpacity>
                   </View>
@@ -224,6 +381,19 @@ export default function ProductsScreen({ navigation }) {
             </Text>
 
             <View style={styles.paginationControls}>
+              {currentPage > 1 && (
+                <TouchableOpacity
+                  style={styles.nextButton}
+                  onPress={goToPreviousPage}
+                >
+                  <Ionicons
+                    name="chevron-back"
+                    size={19}
+                    color="#222222"
+                  />
+                </TouchableOpacity>
+              )}
+
               <Text style={styles.pageNumber}>{currentPage}</Text>
 
               <TouchableOpacity
@@ -252,10 +422,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 10 : 0,
+    paddingBottom: Platform.OS === 'android' ? 16 : 0,
   },
 
   header: {
-    marginHorizontal: 14,
+    marginHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 10,
     borderBottomWidth: 2,
@@ -311,9 +483,41 @@ const styles = StyleSheet.create({
   },
 
   content: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 16,
     paddingTop: 13,
     paddingBottom: 40,
+  },
+
+  topUserBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    marginBottom: 12,
+  },
+
+  greetingText: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#222222',
+  },
+
+  newButton: {
+    backgroundColor: '#9747FF',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 9,
+    elevation: 3,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 1,
+  },
+
+  newButtonText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '600',
   },
 
   title: {
@@ -406,12 +610,14 @@ const styles = StyleSheet.create({
   },
 
   actionColumn: {
-    width: 55,
+    width: 65,
     alignItems: 'center',
   },
 
   actionCell: {
+    flexDirection: 'row',
     justifyContent: 'center',
+    gap: 8,
   },
 
   emptyText: {
