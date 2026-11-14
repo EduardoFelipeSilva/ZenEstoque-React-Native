@@ -1,5 +1,13 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  SafeAreaView,
+  Platform,
+  StatusBar,
+} from 'react-native';
 
 export default function WelcomeScreen({ navigation }) {
   return (
@@ -13,11 +21,19 @@ export default function WelcomeScreen({ navigation }) {
       <Text style={styles.title}>Bem-vindo ao Zen Estoques</Text>
       <Text style={styles.subtitle}>Faça login para continuar</Text>
       <View style={styles.actionsContainer}>
-        <TouchableOpacity style={styles.button} activeOpacity={0.8} onPress={() => navigation.navigate('Login')}>
+        <TouchableOpacity
+          style={styles.button}
+          activeOpacity={0.8}
+          onPress={() => navigation.navigate('Login')}
+        >
           <Text style={styles.buttonText}>Faça o Login</Text>
         </TouchableOpacity>
         <Text style={styles.orText}>Ou</Text>
-        <TouchableOpacity style={styles.button} activeOpacity={0.8} onPress={() => navigation.navigate('Register')}>
+        <TouchableOpacity
+          style={styles.button}
+          activeOpacity={0.8}
+          onPress={() => navigation.navigate('Register')}
+        >
           <Text style={styles.buttonText}>Cadastre-se</Text>
         </TouchableOpacity>
       </View>
@@ -32,6 +48,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 10 : 0,
+    paddingBottom: Platform.OS === 'android' ? 16 : 0,
   },
 
   logoWrapper: {
