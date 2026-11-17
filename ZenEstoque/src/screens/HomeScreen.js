@@ -16,8 +16,8 @@ export default function HomeScreen({ route, navigation }) {
 
   const topMenuItems = [
     { label: 'Home', screen: 'Home' },
-    { label: 'Dashboard', screen: 'Products' },
-    { label: 'Produtos', screen: 'Products' },
+    { label: 'Dashboard', screen: 'Dashboard' },
+    { label: 'Produtos', screen: 'Dashboard' },
     { label: 'Vendas', screen: 'Sales' },
     { label: 'Editar', screen: 'EditProduct' },
     { label: 'Ajuda', screen: 'Help' },
