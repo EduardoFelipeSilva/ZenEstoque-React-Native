@@ -13,6 +13,8 @@ import EditProductScreen from './src/screens/EditProductScreen';
 import ProductsScreen from './src/screens/ProductsScreen';
 import SalesScreen from './src/screens/SalesScreen';
 import ProfileModalScreen from './src/screens/ProfileModalScreen';
+import DashboardScreen from './src/screens/DashboardScreen';
+import ProblemScreen from './src/screens/ProblemScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -38,6 +40,8 @@ export default function App() {
           component={ProfileModalScreen}
           options={{ presentation: 'transparentModal', animation: 'fade' }}
         />
+        <Stack.Screen name="Dashboard" component={DashboardScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Problem" component={ProblemScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
