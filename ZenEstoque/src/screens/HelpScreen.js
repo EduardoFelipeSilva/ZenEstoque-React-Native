@@ -31,11 +31,9 @@ export default function HelpScreen({ route, navigation }) {
     );
   };
 
+  // Alterado para navegar para a tela de problemas que criamos
   const handleProblemPress = () => {
-    Alert.alert(
-      'Reportar Problema',
-      'Descreva o seu problema para a nossa equipa técnica.'
-    );
+    navigation.navigate('Problem', { userName });
   };
 
   const handleRatingPress = () => {
@@ -60,7 +58,7 @@ export default function HelpScreen({ route, navigation }) {
 
             <TouchableOpacity
               style={styles.menuButton}
-              onPress={() => navigateTo('Products')}
+              onPress={() => navigateTo('Dashboard')}
             >
               <Text style={styles.menuText}>Dashboard</Text>
             </TouchableOpacity>
@@ -89,7 +87,7 @@ export default function HelpScreen({ route, navigation }) {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.menuButton}
+              style={[styles.menuButton, styles.activeButton]}
               activeOpacity={1}
             >
               <Text style={styles.menuText}>Ajuda</Text>
@@ -205,6 +203,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.18,
     shadowRadius: 1,
+  },
+
+  activeButton: {
+    backgroundColor: '#A855F7',
   },
 
   menuText: {
