@@ -27,7 +27,7 @@ export default function SalesScreen({ route, navigation }) {
   const menuRows = [
     [
       { label: 'Home', screen: 'Home' },
-      { label: 'Dashboard', screen: 'Products' },
+      { label: 'Dashboard', screen: 'Dashboard' },
       { label: 'Produtos', screen: 'Products' },
     ],
     [
