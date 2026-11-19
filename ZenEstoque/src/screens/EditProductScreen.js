@@ -105,7 +105,7 @@ export default function EditProductScreen({ route, navigation }) {
 
             <TouchableOpacity
               style={styles.menuButton}
-              onPress={() => navigateTo('Products')}
+              onPress={() => navigateTo('Dashboard')}
             >
               <Text style={styles.menuText}>Dashboard</Text>
             </TouchableOpacity>
