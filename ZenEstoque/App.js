@@ -1,6 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { SessionManager } from './src/services/session';
+import { USERS_KEY } from './src/storage/storageKeys';
 
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import LoginScreen from './src/screens/LoginScreen';
@@ -19,16 +24,56 @@ import ProblemScreen from './src/screens/ProblemScreen';
 const Stack = createNativeStackNavigator();
 
 export default function App() {
+  const [isReady, setIsReady] = useState(false);
+  const [initialRoute, setInitialRoute] = useState('Welcome');
+  const [initialUserName, setInitialUserName] = useState('usuário');
+
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const loggedEmail = await SessionManager.getLoggedUser();
+        if (loggedEmail) {
+          const usersJson = await AsyncStorage.getItem(USERS_KEY);
+          const users = usersJson ? JSON.parse(usersJson) : [];
+          const foundUser = users.find(
+            (u) => u.email && u.email.toLowerCase() === loggedEmail.toLowerCase()
+          );
+
+          setInitialUserName((foundUser && foundUser.nome) || 'Administrador');
+          setInitialRoute('Home');
+        }
+      } catch (error) {
+        console.log('Erro ao restaurar sessão:', error);
+      } finally {
+        setIsReady(true);
+      }
+    };
+
+    checkSession();
+  }, []);
+
+  if (!isReady) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
+        <ActivityIndicator size="large" color="#A855F7" />
+      </View>
+    );
+  }
+
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="Welcome"
+        initialRouteName={initialRoute}
         screenOptions={{ headerShown: false }}
       >
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Register" component={RegisterScreen} />
-        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen
+          name="Home"
+          component={HomeScreen}
+          initialParams={{ userName: initialUserName }}
+        />
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="Success" component={SuccessScreen} />
         <Stack.Screen name="Help" component={HelpScreen} />
