@@ -1,20 +1,42 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { USERS_KEY } from '../storage/storageKeys';
 
+export const DEFAULT_TEST_USER = {
+  nome: 'Administrador',
+  email: 'admin@zenestoques.com',
+  telefone: '11999999999',
+  empresa: 'Zen Estoques',
+  senha: '123456',
+};
+
+const getStoredUsers = async () => {
+  const usersJson = await AsyncStorage.getItem(USERS_KEY);
+  const users = usersJson ? JSON.parse(usersJson) : [];
+
+  const hasDefaultUser = users.some(
+    (u) => u.email && u.email.toLowerCase() === DEFAULT_TEST_USER.email
+  );
+
+  if (!hasDefaultUser) {
+    const updatedUsers = [DEFAULT_TEST_USER, ...users];
+    await AsyncStorage.setItem(USERS_KEY, JSON.stringify(updatedUsers));
+    return updatedUsers;
+  }
+
+  return users;
+};
+
 const api = {
   post: async (endpoint, bodyData) => {
     // CADASTRO DE USUÁRIO
     if (endpoint === '/register') {
       try {
         const { nome, email, telefone, empresa, senha } = bodyData;
-
         const normalizedEmail = email.trim().toLowerCase();
-
-        const usersJson = await AsyncStorage.getItem(USERS_KEY);
-        const users = usersJson ? JSON.parse(usersJson) : [];
+        const users = await getStoredUsers();
 
         const userExists = users.some(
-          (user) => user.email?.toLowerCase() === normalizedEmail
+          (user) => user.email && user.email.toLowerCase() === normalizedEmail
         );
 
         if (userExists) {
@@ -35,11 +57,7 @@ const api = {
         };
 
         users.push(newUser);
-
-        await AsyncStorage.setItem(
-          USERS_KEY,
-          JSON.stringify(users)
-        );
+        await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
 
         return {
           data: {
@@ -64,15 +82,13 @@ const api = {
     if (endpoint === '/login') {
       try {
         const { email, password } = bodyData;
-
         const normalizedEmail = email.trim().toLowerCase();
-
-        const usersJson = await AsyncStorage.getItem(USERS_KEY);
-        const users = usersJson ? JSON.parse(usersJson) : [];
+        const users = await getStoredUsers();
 
         const user = users.find(
           (item) =>
-            item.email?.toLowerCase() === normalizedEmail &&
+            item.email &&
+            item.email.toLowerCase() === normalizedEmail &&
             item.senha === password
         );
 
@@ -113,12 +129,12 @@ const api = {
     // RECUPERAÇÃO DE SENHA
     if (endpoint === '/forgot-password') {
       try {
-        const normalizedEmail = bodyData.email?.trim().toLowerCase();
-        const usersJson = await AsyncStorage.getItem(USERS_KEY);
-        const users = usersJson ? JSON.parse(usersJson) : [];
+        const normalizedEmail =
+          bodyData && bodyData.email ? bodyData.email.trim().toLowerCase() : '';
+        const users = await getStoredUsers();
 
         const userExists = users.some(
-          (item) => item.email?.toLowerCase() === normalizedEmail
+          (item) => item.email && item.email.toLowerCase() === normalizedEmail
         );
 
         if (!userExists) {
