@@ -24,20 +24,7 @@ export default function SalesScreen({ route, navigation }) {
 
   const currentData = SALES_DATA[periodIndex];
 
-  const menuRows = [
-    [
-      { label: 'Home', screen: 'Home' },
-      { label: 'Dashboard', screen: 'Dashboard' },
-      { label: 'Produtos', screen: 'Products' },
-    ],
-    [
-      { label: 'Vendas', screen: 'Sales' },
-      { label: 'Editar', screen: 'EditProduct' },
-      { label: 'Ajuda', screen: 'Help' },
-    ],
-  ];
-
-  const handleNavigate = (screen) => {
+  const navigateTo = (screen) => {
     if (!screen || screen === 'Sales') return;
     navigation.navigate(screen, { userName });
   };
@@ -62,39 +49,63 @@ export default function SalesScreen({ route, navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Menu superior */}
-      <View style={styles.topMenuContainer}>
-        <View style={styles.menuRows}>
-          {menuRows.map((row, index) => (
-            <View key={index} style={styles.menuRow}>
-              {row.map((item) => (
-                <TouchableOpacity
-                  key={item.label}
-                  style={[
-                    styles.topChip,
-                    item.label === 'Vendas' && styles.activeChip,
-                  ]}
-                  activeOpacity={item.label === 'Vendas' ? 1 : 0.7}
-                  onPress={() => handleNavigate(item.screen)}
-                >
-                  <Text style={styles.topChipText}>{item.label}</Text>
-                </TouchableOpacity>
-              ))}
+      {/* Menu superior padronizado */}
+      <View style={styles.header}>
+        <View style={styles.menu}>
+          <View style={styles.menuRow}>
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => navigateTo('Home')}
+            >
+              <Text style={styles.menuText}>Home</Text>
+            </TouchableOpacity>
 
-              {index === 1 && (
-                <TouchableOpacity
-                  style={styles.profileChip}
-                  onPress={() => navigation.navigate('Profile', { userName })}
-                >
-                  <Text style={styles.profileIcon}>🦋</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          ))}
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => navigateTo('Dashboard')}
+            >
+              <Text style={styles.menuText}>Dashboard</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => navigateTo('Products')}
+            >
+              <Text style={styles.menuText}>Produtos</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.menuRow}>
+            <TouchableOpacity
+              style={[styles.menuButton, styles.activeButton]}
+              activeOpacity={1}
+            >
+              <Text style={styles.menuText}>Vendas</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => navigateTo('EditProduct')}
+            >
+              <Text style={styles.menuText}>Editar</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => navigateTo('Help')}
+            >
+              <Text style={styles.menuText}>Ajuda</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.profileButton}
+              onPress={() => navigation.navigate('Profile', { userName })}
+            >
+              <Text style={styles.butterfly}>🦋</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
-
-      <View style={styles.purpleLine} />
 
       <ScrollView
         contentContainerStyle={styles.content}
@@ -141,60 +152,60 @@ const styles = StyleSheet.create({
     paddingBottom: Platform.OS === 'android' ? 16 : 0,
   },
 
-  topMenuContainer: {
-    paddingTop: 9,
-    paddingBottom: 8,
-    paddingHorizontal: 16,
+  header: {
+    marginHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 10,
+    borderBottomWidth: 2,
+    borderBottomColor: '#9747FF',
   },
 
-  menuRows: {
-    gap: 7,
+  menu: {
+    gap: 5,
   },
 
   menuRow: {
     flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
     gap: 7,
   },
 
-  topChip: {
-    backgroundColor: '#A855F7',
-    paddingHorizontal: 13,
+  menuButton: {
+    backgroundColor: '#9747FF',
+    paddingHorizontal: 11,
     paddingVertical: 8,
     borderRadius: 9,
-    borderBottomWidth: 3,
-    borderBottomColor: '#9333EA',
+    elevation: 3,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 1,
   },
 
-  activeChip: {
-    backgroundColor: '#9333EA',
+  activeButton: {
+    backgroundColor: '#A855F7',
   },
 
-  topChipText: {
+  menuText: {
     color: '#FFFFFF',
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '500',
   },
 
-  profileChip: {
-    width: 39,
-    height: 37,
+  profileButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#E5E5E5',
     borderWidth: 1,
-    borderColor: '#A855F7',
-    borderRadius: 10,
+    borderColor: '#9747FF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 'auto',
   },
 
-  profileIcon: {
-    fontSize: 23,
-  },
-
-  purpleLine: {
-    height: 2,
-    backgroundColor: '#A855F7',
-    marginHorizontal: 16,
+  butterfly: {
+    fontSize: 25,
   },
 
   content: {
