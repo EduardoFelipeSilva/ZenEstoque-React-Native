@@ -1,51 +1,49 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  StyleSheet,
-  Text,
-  View,
-  TouchableOpacity,
   SafeAreaView,
   ScrollView,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
   Alert,
   Platform,
   StatusBar,
 } from 'react-native';
 
-import { Ionicons } from '@expo/vector-icons';
-
-export default function HelpScreen({ route, navigation }) {
+export default function ProblemScreen({ route, navigation }) {
   const userName = (route && route.params && route.params.userName) || 'usuário';
+  const [mensagem, setMensagem] = useState('');
 
-  const navigateTo = (screen) => {
-    navigation.navigate(screen, { userName });
+  const navigateTo = (screen, extraParams = {}) => {
+    navigation.navigate(screen, { userName, ...extraParams });
   };
 
-  const handleProfilePress = () => {
-    navigation.navigate('Profile', { userName });
-  };
+  const handleEnviarMensagem = () => {
+    if (!mensagem.trim()) {
+      Alert.alert('Atenção', 'Por favor, escreva seu relato antes de enviar.');
+      return;
+    }
 
-  const handleContactPress = () => {
     Alert.alert(
-      'Contato',
-      'Entre em contato conosco através do email: suporte@zenestoques.com'
-    );
-  };
-
-  // Alterado para navegar para a tela de problemas que criamos
-  const handleProblemPress = () => {
-    navigation.navigate('Problem', { userName });
-  };
-
-  const handleRatingPress = () => {
-    Alert.alert(
-      'Avaliação',
-      'Obrigado por querer avaliar o Zen Estoques!'
+      'Mensagem Enviada',
+      'Obrigado! Seu relato de problema foi enviado com sucesso.',
+      [
+        {
+          text: 'OK',
+          onPress: () => {
+            setMensagem('');
+            navigation.goBack(); // Retorna para a tela de ajuda
+          },
+        },
+      ]
     );
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Menu superior em duas linhas, conforme o Figma */}
+      {/* Menu superior padronizado */}
       <View style={styles.header}>
         <View style={styles.menu}>
           <View style={styles.menuRow}>
@@ -95,8 +93,7 @@ export default function HelpScreen({ route, navigation }) {
 
             <TouchableOpacity
               style={styles.profileButton}
-              onPress={handleProfilePress}
-              activeOpacity={0.8}
+              onPress={() => navigateTo('Profile')}
             >
               <Text style={styles.butterfly}>🦋</Text>
             </TouchableOpacity>
@@ -104,63 +101,54 @@ export default function HelpScreen({ route, navigation }) {
         </View>
       </View>
 
-      {/* Conteúdo da tela */}
+      {/* Conteúdo */}
       <ScrollView
-        contentContainerStyle={styles.mainContent}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.screenTitle}>Ajuda</Text>
-
-        {/* Card Contato */}
-        <TouchableOpacity
-          style={styles.card}
-          activeOpacity={0.85}
-          onPress={handleContactPress}
-        >
-          <View style={styles.phoneCircle}>
-            <Ionicons name="call" size={32} color="#FFFFFF" />
-          </View>
-
-          <Text style={styles.cardTitle}>Contato</Text>
-
-          <Text style={styles.cardSubtitle}>
-            Precisa de alguma ajuda?{' \n'}
-            Entre em contato conosco!
+        <View style={styles.titleArea}>
+          <Text style={styles.title}>Relatar Problema</Text>
+          <Text style={styles.subtitle}>
+            Encontrou algum erro ou dificuldade? Deixe sua mensagem abaixo para nossa equipe.
           </Text>
+        </View>
+
+        {/* Caixa de Texto / Formulário */}
+        <View style={styles.formContainer}>
+          <Text style={styles.label}>Descreva o problema:</Text>
+          <TextInput
+            style={styles.textArea}
+            placeholder="Digite aqui os detalhes do que aconteceu..."
+            placeholderTextColor="#A3A3A3"
+            multiline={true}
+            numberOfLines={6}
+            textAlignVertical="top"
+            value={mensagem}
+            onChangeText={setMensagem}
+          />
+        </View>
+
+        {/* Botão Enviar */}
+        <TouchableOpacity
+          style={styles.sendButton}
+          onPress={handleEnviarMensagem}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.sendButtonText}>Enviar Mensagem</Text>
         </TouchableOpacity>
 
-        {/* Card Problema */}
+        {/* Botão Cancelar */}
         <TouchableOpacity
-          style={styles.card}
-          activeOpacity={0.85}
-          onPress={handleProblemPress}
+          style={styles.cancelButton}
+          onPress={() => navigateTo('Help')}
+          activeOpacity={0.8}
         >
-          <Text style={styles.illustration}>📝</Text>
-
-          <Text style={styles.cardTitle}>Problema</Text>
-
-          <Text style={styles.cardSubtitle}>
-            Está com algum Problema?{' \n'}
-            Entre em contato conosco!
-          </Text>
-        </TouchableOpacity>
-
-        {/* Card Avaliação */}
-        <TouchableOpacity
-          style={styles.card}
-          activeOpacity={0.85}
-          onPress={handleRatingPress}
-        >
-          <Text style={styles.illustration}>⭐</Text>
-
-          <Text style={styles.cardTitle}>Avaliação</Text>
-
-          <Text style={styles.cardSubtitle}>
-            Avalie o nosso App na Play{' \n'}
-            store/Apple Store
-          </Text>
+          <Text style={styles.cancelButtonText}>Cancelar</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Decoração inferior */}
+      <View style={styles.bottomDecoration} pointerEvents="none" />
     </SafeAreaView>
   );
 }
@@ -174,12 +162,11 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    paddingHorizontal: 12,
+    marginHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 10,
     borderBottomWidth: 2,
     borderBottomColor: '#9747FF',
-    marginHorizontal: 16,
   },
 
   menu: {
@@ -188,8 +175,8 @@ const styles = StyleSheet.create({
 
   menuRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
     gap: 7,
   },
 
@@ -230,66 +217,102 @@ const styles = StyleSheet.create({
     fontSize: 25,
   },
 
-  mainContent: {
-    paddingHorizontal: 24,
+  content: {
+    paddingHorizontal: 16,
     paddingTop: 14,
-    paddingBottom: 20,
-    alignItems: 'center',
+    paddingBottom: 50,
   },
 
-  screenTitle: {
-    width: '100%',
+  titleArea: {
+    position: 'relative',
+    marginBottom: 20,
+    paddingTop: 2,
+    minHeight: 78,
+    overflow: 'hidden',
+  },
+
+  title: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#222222',
-    marginBottom: 12,
-    marginLeft: 4,
-  },
-
-  card: {
-    width: '85%',
-    height: 136,
-    backgroundColor: '#C99AF5',
-    borderRadius: 14,
-    borderWidth: 2,
-    borderColor: '#9870B9',
-    alignItems: 'center',
-    justifyContent: 'center',
     marginBottom: 6,
-    paddingHorizontal: 10,
+    zIndex: 1,
   },
 
-  phoneCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#2196D2',
+  subtitle: {
+    fontSize: 11,
+    color: '#888888',
+    lineHeight: 15,
+    zIndex: 1,
+  },
+
+  formContainer: {
+    width: '100%',
+    marginBottom: 20,
+  },
+
+  label: {
+    fontSize: 11,
+    color: '#222222',
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+
+  textArea: {
+    height: 140,
+    width: '100%',
+    borderWidth: 1.3,
+    borderColor: '#9747FF',
+    borderRadius: 10,
+    paddingHorizontal: 13,
+    paddingTop: 12,
+    fontSize: 12,
+    color: '#333333',
+    backgroundColor: '#FFFFFF',
+  },
+
+  sendButton: {
+    height: 44,
+    backgroundColor: '#9747FF',
+    borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 4,
+    borderBottomWidth: 4,
+    borderBottomColor: '#B77AFF',
   },
 
-  illustration: {
-    fontSize: 43,
-    height: 52,
-    textAlign: 'center',
-    textAlignVertical: 'center',
-    marginBottom: 2,
-  },
-
-  cardTitle: {
-    fontSize: 19,
-    fontWeight: 'bold',
+  sendButtonText: {
     color: '#FFFFFF',
-    textAlign: 'center',
-    marginBottom: 4,
+    fontSize: 13,
+    fontWeight: '600',
   },
 
-  cardSubtitle: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#F5E9FF',
-    textAlign: 'center',
-    lineHeight: 16,
+  cancelButton: {
+    height: 44,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 9,
+    borderWidth: 1.5,
+    borderColor: '#9747FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+  },
+
+  cancelButtonText: {
+    color: '#9747FF',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+
+  bottomDecoration: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 0,
+    height: 0,
+    borderBottomWidth: 220,
+    borderLeftWidth: 340,
+    borderBottomColor: '#C084FC',
+    borderLeftColor: 'transparent',
   },
 });
