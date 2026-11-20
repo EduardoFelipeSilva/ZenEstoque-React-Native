@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
@@ -12,91 +13,248 @@ import {
   StatusBar,
 } from 'react-native';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { PRODUCTS_KEY } from '../storage/storageKeys';
+
 export default function EditProductScreen({ route, navigation }) {
-  const params = (route && route.params) || {};
+  const params = route?.params || {};
   const userName = params.userName || 'usuário';
   const productToEdit = params.product || null;
-  const isCreateMode = params.mode === 'create';
+  const isCreateMode = !productToEdit;
 
   const [nome, setNome] = useState('');
   const [preco, setPreco] = useState('');
   const [custo, setCusto] = useState('');
   const [categoria, setCategoria] = useState('');
+  const [validade, setValidade] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  // Preenche os campos automaticamente se um produto foi enviado para edição
+  // Preenche os campos quando estiver editando
   useEffect(() => {
     if (productToEdit) {
-      setNome(productToEdit.nome || '');
+      setNome(productToEdit.nome || productToEdit.name || '');
+
       setPreco(
-        productToEdit.valor !== undefined
-          ? String(productToEdit.valor).replace('.', ',')
-          : ''
+        String(
+          productToEdit.valor ?? productToEdit.price ?? ''
+        ).replace('.', ',')
       );
+
       setCusto(
-        productToEdit.custo !== undefined
-          ? String(productToEdit.custo).replace('.', ',')
-          : ''
+        String(
+          productToEdit.custo ?? productToEdit.cost ?? ''
+        ).replace('.', ',')
       );
-      setCategoria(productToEdit.tipo || productToEdit.categoria || '');
+
+      setCategoria(
+        productToEdit.tipo ||
+        productToEdit.categoria ||
+        productToEdit.category ||
+        ''
+      );
+
+      const expiry =
+        productToEdit.validade ||
+        productToEdit.expiry ||
+        '';
+
+      setValidade(
+        expiry === 'Não informada' ? '' : expiry
+      );
+
     } else {
       setNome('');
       setPreco('');
       setCusto('');
       setCategoria('');
+      setValidade('');
     }
   }, [productToEdit]);
 
+  // Exibe mensagens no celular e no navegador
+  const showMessage = (title, message, callback) => {
+    if (Platform.OS === 'web') {
+      window.alert(`${title}\n\n${message}`);
+
+      if (callback) {
+        callback();
+      }
+    } else {
+      Alert.alert(title, message, [
+        {
+          text: 'OK',
+          onPress: callback,
+        },
+      ]);
+    }
+  };
+
+  // Navegação
   const navigateTo = (screen) => {
     navigation.navigate(screen, { userName });
   };
 
-  const handleSave = () => {
-    if (!nome.trim() || !preco.trim() || !custo.trim() || !categoria.trim()) {
-      Alert.alert('Atenção', 'Preencha todos os campos antes de salvar.');
+  // Converte valores monetários para números
+  const parseValue = (value) => {
+    let text = String(value)
+      .replace('R$', '')
+      .replace(/\s/g, '');
+
+    if (text.includes(',')) {
+      text = text
+        .replace(/\./g, '')
+        .replace(',', '.');
+    }
+
+    return Number(text);
+  };
+
+  // Salva ou atualiza o produto no AsyncStorage
+  const handleSave = async () => {
+    if (saving) return;
+
+    // Validação dos campos obrigatórios
+    if (
+      !nome.trim() ||
+      !preco.trim() ||
+      !custo.trim() ||
+      !categoria.trim()
+    ) {
+      showMessage(
+        'Atenção',
+        'Preencha todos os campos obrigatórios antes de salvar.'
+      );
+
       return;
     }
 
-    const parsedValor = parseFloat(preco.replace('R$', '').replace(',', '.').trim());
-    const parsedCusto = parseFloat(custo.replace('R$', '').replace(',', '.').trim());
+    const parsedValor = parseValue(preco);
+    const parsedCusto = parseValue(custo);
 
-    if (isNaN(parsedValor) || isNaN(parsedCusto)) {
-      Alert.alert('Valor inválido', 'Informe números válidos para Preço e Custo.');
+    // Validação dos valores
+    if (
+      !Number.isFinite(parsedValor) ||
+      !Number.isFinite(parsedCusto) ||
+      parsedValor < 0 ||
+      parsedCusto < 0
+    ) {
+      showMessage(
+        'Valor inválido',
+        'Informe números válidos para Preço e Custo.'
+      );
+
       return;
     }
 
-    const savedProduct = {
-      id: (productToEdit && productToEdit.id) || String(Date.now()),
-      nome: nome.trim(),
-      tipo: categoria.trim(),
-      custo: parsedCusto,
-      valor: parsedValor,
-    };
+    setSaving(true);
 
-    Alert.alert(
-      'Sucesso',
-      isCreateMode
-        ? 'Produto cadastrado com sucesso!'
-        : 'Alterações salvas com sucesso!',
-      [
-        {
-          text: 'OK',
-          onPress: () =>
-            navigation.navigate('Products', {
-              userName,
-              savedProduct,
-              isNew: !productToEdit,
-            }),
-        },
-      ]
-    );
+    try {
+      // Busca os produtos já cadastrados
+      const stored = await AsyncStorage.getItem(PRODUCTS_KEY);
+
+      const products = stored
+        ? JSON.parse(stored)
+        : [];
+
+      if (!Array.isArray(products)) {
+        throw new Error('Formato de armazenamento inválido.');
+      }
+
+      // Cria o objeto do produto
+      const savedProduct = {
+        id: productToEdit?.id ?? String(Date.now()),
+        nome: nome.trim(),
+        tipo: categoria.trim(),
+        custo: parsedCusto,
+        valor: parsedValor,
+        validade: validade.trim(),
+        expiry: validade.trim(),
+      };
+
+      let updatedProducts;
+
+      if (productToEdit) {
+        // Atualiza um produto existente
+        const exists = products.some(
+          (item) =>
+            String(item.id) === String(savedProduct.id)
+        );
+
+        if (!exists) {
+          throw new Error('Produto não encontrado.');
+        }
+
+        updatedProducts = products.map((item) =>
+          String(item.id) === String(savedProduct.id)
+            ? { ...item, ...savedProduct }
+            : item
+        );
+
+      } else {
+        // Adiciona um novo produto
+        updatedProducts = [
+          savedProduct,
+          ...products,
+        ];
+      }
+
+      // Salva definitivamente no armazenamento
+      await AsyncStorage.setItem(
+        PRODUCTS_KEY,
+        JSON.stringify(updatedProducts)
+      );
+
+      console.log('Produto salvo:', savedProduct);
+      console.log('Produtos cadastrados:', updatedProducts);
+
+      // Exibe a confirmação e retorna para a lista
+      showMessage(
+        'Sucesso',
+        isCreateMode
+          ? 'Produto cadastrado com sucesso!'
+          : 'Alterações salvas com sucesso!',
+        () => {
+          setNome('');
+          setPreco('');
+          setCusto('');
+          setCategoria('');
+          setValidade('');
+
+          navigation.setParams({
+            product: null,
+            mode: 'create',
+          });
+
+          navigation.navigate('Products', {
+            userName,
+            savedProduct: null,
+            mode: 'view',
+          });
+        }
+      );
+
+    } catch (error) {
+      console.log('Erro ao salvar produto:', error);
+
+      showMessage(
+        'Erro',
+        'Não foi possível salvar o produto: ' + error.message
+      );
+
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
+
       {/* Menu superior */}
       <View style={styles.header}>
         <View style={styles.menu}>
+
           <View style={styles.menuRow}>
+
             <TouchableOpacity
               style={styles.menuButton}
               onPress={() => navigateTo('Home')}
@@ -117,9 +275,11 @@ export default function EditProductScreen({ route, navigation }) {
             >
               <Text style={styles.menuText}>Produtos</Text>
             </TouchableOpacity>
+
           </View>
 
           <View style={styles.menuRow}>
+
             <TouchableOpacity
               style={styles.menuButton}
               onPress={() => navigateTo('Sales')}
@@ -128,7 +288,10 @@ export default function EditProductScreen({ route, navigation }) {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.menuButton, styles.activeButton]}
+              style={[
+                styles.menuButton,
+                styles.activeButton,
+              ]}
               activeOpacity={1}
             >
               <Text style={styles.menuText}>Editar</Text>
@@ -147,6 +310,7 @@ export default function EditProductScreen({ route, navigation }) {
             >
               <Text style={styles.butterfly}>🦋</Text>
             </TouchableOpacity>
+
           </View>
         </View>
       </View>
@@ -155,10 +319,15 @@ export default function EditProductScreen({ route, navigation }) {
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
+
         <View style={styles.titleArea}>
+
           <Text style={styles.title}>
-            {isCreateMode ? 'Cadastrar Produto' : 'Editar Produto'}
+            {isCreateMode
+              ? 'Cadastrar Produto'
+              : 'Editar Produto'}
           </Text>
 
           <Text style={styles.subtitle}>
@@ -166,10 +335,13 @@ export default function EditProductScreen({ route, navigation }) {
               ? 'Insira as informações abaixo sobre o produto\na ser cadastrado.'
               : 'Insira as informações abaixo sobre o produto\na ser modificado.'}
           </Text>
+
         </View>
 
         {/* Formulário */}
         <View style={styles.form}>
+
+          {/* Nome */}
           <Text style={styles.label}>Nome:</Text>
 
           <TextInput
@@ -180,6 +352,7 @@ export default function EditProductScreen({ route, navigation }) {
             onChangeText={setNome}
           />
 
+          {/* Preço */}
           <Text style={styles.label}>Preço:</Text>
 
           <TextInput
@@ -191,6 +364,7 @@ export default function EditProductScreen({ route, navigation }) {
             onChangeText={setPreco}
           />
 
+          {/* Custo */}
           <Text style={styles.label}>Custo:</Text>
 
           <TextInput
@@ -202,6 +376,7 @@ export default function EditProductScreen({ route, navigation }) {
             onChangeText={setCusto}
           />
 
+          {/* Categoria */}
           <Text style={styles.label}>Categoria:</Text>
 
           <TextInput
@@ -211,22 +386,52 @@ export default function EditProductScreen({ route, navigation }) {
             value={categoria}
             onChangeText={setCategoria}
           />
+
+          {/* Validade */}
+          <Text style={styles.label}>
+            Validade (opcional):
+          </Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="DD/MM/AAAA"
+            placeholderTextColor="#A3A3A3"
+            value={validade}
+            onChangeText={setValidade}
+            maxLength={10}
+          />
+
         </View>
 
-        {/* Botão */}
+        {/* Botão salvar */}
         <TouchableOpacity
-          style={styles.saveButton}
+          style={[
+            styles.saveButton,
+            saving && styles.disabledButton,
+          ]}
           onPress={handleSave}
           activeOpacity={0.8}
+          disabled={saving}
         >
+
           <Text style={styles.saveButtonText}>
-            {isCreateMode ? 'Cadastrar Produto' : 'Salvar Alterações'}
+            {saving
+              ? 'Salvando...'
+              : isCreateMode
+                ? 'Cadastrar Produto'
+                : 'Salvar Alterações'}
           </Text>
+
         </TouchableOpacity>
+
       </ScrollView>
 
-      {/* Decoração inferior direita inclinada */}
-      <View style={styles.bottomDecoration} pointerEvents="none" />
+      {/* Decoração inferior direita */}
+      <View
+        style={styles.bottomDecoration}
+        pointerEvents="none"
+      />
+
     </SafeAreaView>
   );
 }
@@ -235,8 +440,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 10 : 0,
-    paddingBottom: Platform.OS === 'android' ? 16 : 0,
+    paddingTop:
+      Platform.OS === 'android'
+        ? (StatusBar.currentHeight || 24) + 10
+        : 0,
+    paddingBottom:
+      Platform.OS === 'android' ? 16 : 0,
   },
 
   header: {
@@ -265,7 +474,10 @@ const styles = StyleSheet.create({
     borderRadius: 9,
     elevation: 3,
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
     shadowOpacity: 0.18,
     shadowRadius: 1,
   },
@@ -346,6 +558,10 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#333333',
     backgroundColor: '#FFFFFF',
+
+    ...(Platform.OS === 'web'
+      ? { outlineStyle: 'none' }
+      : {}),
   },
 
   saveButton: {
@@ -357,6 +573,10 @@ const styles = StyleSheet.create({
     marginTop: 20,
     borderBottomWidth: 4,
     borderBottomColor: '#B77AFF',
+  },
+
+  disabledButton: {
+    opacity: 0.6,
   },
 
   saveButtonText: {

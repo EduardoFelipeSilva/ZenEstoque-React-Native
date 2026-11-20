@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -12,119 +13,156 @@ import {
   StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PRODUCTS_KEY } from '../storage/storageKeys';
 
-const initialProducts = [
-  { id: 1, name: 'Tomate Italiano', category: 'Legumes', price: 'R$ 8,50', cost: 'R$ 5,00', expiry: '12/11/2026' },
-  { id: 2, name: 'Banana Prata', category: 'Frutas', price: 'R$ 6,00', cost: 'R$ 3,50', expiry: '11/11/2026' },
-  { id: 3, name: 'Maçã Fuji', category: 'Frutas', price: 'R$ 9,90', cost: 'R$ 6,00', expiry: '15/11/2026' },
-  { id: 4, name: 'Mamão Formosa', category: 'Frutas', price: 'R$ 7,50', cost: 'R$ 4,00', expiry: '13/11/2026' },
-  { id: 5, name: 'Morango', category: 'Frutas', price: 'R$ 12,00', cost: 'R$ 8,00', expiry: '10/11/2026' },
-  { id: 6, name: 'Uva Verde', category: 'Frutas', price: 'R$ 14,00', cost: 'R$ 9,00', expiry: '14/11/2026' },
-  { id: 7, name: 'Alface Crespa', category: 'Verduras', price: 'R$ 4,50', cost: 'R$ 2,00', expiry: '11/11/2026' },
-  { id: 8, name: 'Batata Inglesa', category: 'Legumes', price: 'R$ 6,50', cost: 'R$ 3,50', expiry: '20/11/2026' },
-  { id: 9, name: 'Cenoura', category: 'Legumes', price: 'R$ 5,00', cost: 'R$ 2,50', expiry: '18/11/2026' },
-  { id: 10, name: 'Brócolis', category: 'Verduras', price: 'R$ 8,00', cost: 'R$ 4,50', expiry: '12/11/2026' },
-  { id: 11, name: 'Frango Resfriado', category: 'Carnes', price: 'R$ 18,00', cost: 'R$ 13,00', expiry: '12/11/2026' },
-  { id: 12, name: 'Carne Bovina', category: 'Carnes', price: 'R$ 38,00', cost: 'R$ 29,00', expiry: '13/11/2026' },
-  { id: 13, name: 'Leite Integral', category: 'Laticínios', price: 'R$ 5,50', cost: 'R$ 3,50', expiry: '25/11/2026' },
-  { id: 14, name: 'Queijo Minas', category: 'Laticínios', price: 'R$ 22,00', cost: 'R$ 16,00', expiry: '16/11/2026' },
-  { id: 15, name: 'Iogurte Natural', category: 'Laticínios', price: 'R$ 6,00', cost: 'R$ 3,80', expiry: '17/11/2026' },
-  { id: 16, name: 'Presunto Fatiado', category: 'Frios', price: 'R$ 12,00', cost: 'R$ 8,00', expiry: '14/11/2026' },
-  { id: 17, name: 'Peixe Fresco', category: 'Peixes', price: 'R$ 32,00', cost: 'R$ 24,00', expiry: '11/11/2026' },
-];
-
 const ITEMS_PER_PAGE = 6;
 
+// Formata os valores monetários
 const formatCurrency = (value) => {
-  if (typeof value === 'string' && value.includes('R$')) return value;
-  const num = Number(value);
+  if (typeof value === 'string' && value.includes('R$')) {
+    return value;
+  }
+
+  const num = Number(
+    String(value ?? 0).replace(',', '.')
+  );
+
   if (isNaN(num)) return 'R$ 0,00';
+
   return `R$ ${num.toFixed(2).replace('.', ',')}`;
 };
 
+// Converte valores monetários para números
 const parseCurrencyNumber = (value) => {
   if (typeof value === 'number') return value;
   if (!value) return '';
-  return parseFloat(String(value).replace('R$', '').replace(',', '.').trim());
+
+  return parseFloat(
+    String(value)
+      .replace('R$', '')
+      .replace(',', '.')
+      .trim()
+  );
 };
 
 export default function ProductsScreen({ route, navigation }) {
-  const params = (route && route.params) || {};
+  const params = route?.params || {};
   const userName = params.userName || 'usuário';
   const mode = params.mode || 'view';
   const savedProduct = params.savedProduct;
 
-  const [productsList, setProductsList] = useState(initialProducts);
-  const [isStorageLoaded, setIsStorageLoaded] = useState(false);
+  const [productsList, setProductsList] = useState([]);
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(true);
 
-  // Carrega os produtos salvos no AsyncStorage ao abrir a tela
-  useEffect(() => {
-    const loadStoredProducts = async () => {
-      try {
-        const stored = await AsyncStorage.getItem(PRODUCTS_KEY);
-        if (stored) {
-          setProductsList(JSON.parse(stored));
-        } else {
-          await AsyncStorage.setItem(PRODUCTS_KEY, JSON.stringify(initialProducts));
+  // Carrega os produtos sempre que a tela é aberta
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+
+      const loadProducts = async () => {
+        setLoading(true);
+
+        try {
+          const stored = await AsyncStorage.getItem(PRODUCTS_KEY);
+
+          let products = stored ? JSON.parse(stored) : [];
+
+          if (!Array.isArray(products)) {
+            products = [];
+          }
+
+          // Recebe produto cadastrado ou editado
+          if (savedProduct) {
+            const exists = products.some(
+              (item) =>
+                String(item.id) === String(savedProduct.id)
+            );
+
+            if (exists) {
+              products = products.map((item) =>
+                String(item.id) === String(savedProduct.id)
+                  ? { ...item, ...savedProduct }
+                  : item
+              );
+            } else {
+              products = [savedProduct, ...products];
+            }
+
+            await AsyncStorage.setItem(
+              PRODUCTS_KEY,
+              JSON.stringify(products)
+            );
+          }
+
+          // Formata os produtos cadastrados para a tabela
+          const formattedProducts = products.map((product) => ({
+            id: product.id,
+
+            name: String(
+              product.nome ?? product.name ?? ''
+            ),
+
+            category: String(
+              product.tipo ?? product.category ?? ''
+            ),
+
+            cost: formatCurrency(
+              product.custo ?? product.cost ?? 0
+            ),
+
+            price: formatCurrency(
+              product.valor ?? product.price ?? 0
+            ),
+
+            expiry:
+              product.validade ||
+              product.expiry ||
+              'Não informada',
+          }));
+
+          if (active) {
+            setProductsList(formattedProducts);
+            setLoading(false);
+
+            if (savedProduct) {
+              navigation.setParams({ savedProduct: null });
+            }
+          }
+        } catch (error) {
+          console.log('Erro ao carregar produtos:', error);
+
+          if (active) {
+            setLoading(false);
+
+            if (Platform.OS === 'web') {
+              window.alert('Erro ao carregar os produtos.');
+            } else {
+              Alert.alert('Erro', 'Erro ao carregar os produtos.');
+            }
+          }
         }
-      } catch (error) {
-        console.log('Erro ao carregar produtos salvos:', error);
-      } finally {
-        setIsStorageLoaded(true);
-      }
-    };
-
-    loadStoredProducts();
-  }, []);
-
-  // Salva automaticamente no AsyncStorage sempre que a lista for alterada
-  useEffect(() => {
-    if (!isStorageLoaded) return;
-
-    AsyncStorage.setItem(PRODUCTS_KEY, JSON.stringify(productsList)).catch((error) =>
-      console.log('Erro ao salvar produtos:', error)
-    );
-  }, [productsList, isStorageLoaded]);
-
-  // Recebe produto cadastrado ou editado vindo da EditProductScreen
-  useEffect(() => {
-    if (savedProduct) {
-      const rawCost = savedProduct.custo !== undefined ? savedProduct.custo : savedProduct.cost;
-      const rawPrice = savedProduct.valor !== undefined ? savedProduct.valor : savedProduct.price;
-
-      const formattedItem = {
-        id: savedProduct.id,
-        name: savedProduct.nome || savedProduct.name,
-        category: savedProduct.tipo || savedProduct.category,
-        cost: formatCurrency(rawCost),
-        price: formatCurrency(rawPrice),
-        expiry: savedProduct.expiry || '30/11/2026',
       };
 
-      setProductsList((prev) => {
-        const exists = prev.some((item) => String(item.id) === String(formattedItem.id));
-        if (exists) {
-          return prev.map((item) =>
-            String(item.id) === String(formattedItem.id) ? formattedItem : item
-          );
-        }
-        return [formattedItem, ...prev];
-      });
+      loadProducts();
 
-      navigation.setParams({ savedProduct: null });
-    }
-  }, [savedProduct, navigation]);
+      return () => {
+        active = false;
+      };
+    }, [savedProduct, navigation])
+  );
 
+  // Pesquisa por nome ou categoria
   const filteredProducts = productsList.filter(
     (product) =>
       product.name.toLowerCase().includes(search.toLowerCase()) ||
       product.category.toLowerCase().includes(search.toLowerCase())
   );
 
+  // Paginação
   const totalPages = Math.max(
     1,
     Math.ceil(filteredProducts.length / ITEMS_PER_PAGE)
@@ -160,6 +198,7 @@ export default function ProductsScreen({ route, navigation }) {
     }
   };
 
+  // Editar produto
   const handleEditProduct = (product) => {
     navigation.navigate('EditProduct', {
       userName,
@@ -175,32 +214,97 @@ export default function ProductsScreen({ route, navigation }) {
     });
   };
 
+  // Excluir produto do AsyncStorage
   const handleDeleteProduct = (product) => {
+    const removeProduct = async () => {
+      try {
+        const stored = await AsyncStorage.getItem(PRODUCTS_KEY);
+
+        const products = stored ? JSON.parse(stored) : [];
+
+        const updatedProducts = products.filter(
+          (item) => String(item.id) !== String(product.id)
+        );
+
+        await AsyncStorage.setItem(
+          PRODUCTS_KEY,
+          JSON.stringify(updatedProducts)
+        );
+
+        setProductsList((prev) =>
+          prev.filter(
+            (item) => String(item.id) !== String(product.id)
+          )
+        );
+
+        if (Platform.OS === 'web') {
+          window.alert('Produto removido com sucesso!');
+        } else {
+          Alert.alert(
+            'Sucesso',
+            'Produto removido com sucesso!'
+          );
+        }
+      } catch (error) {
+        console.log('Erro ao remover produto:', error);
+
+        if (Platform.OS === 'web') {
+          window.alert('Não foi possível remover o produto.');
+        } else {
+          Alert.alert(
+            'Erro',
+            'Não foi possível remover o produto.'
+          );
+        }
+      }
+    };
+
+    // Confirmação no navegador
+    if (Platform.OS === 'web') {
+      if (
+        window.confirm(
+          `Deseja remover "${product.name}" do sistema?`
+        )
+      ) {
+        removeProduct();
+      }
+
+      return;
+    }
+
+    // Confirmação no celular
     Alert.alert(
       'Remover Produto',
       `Deseja remover "${product.name}" do sistema?`,
       [
-        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
         {
           text: 'Remover',
           style: 'destructive',
-          onPress: () => {
-            setProductsList((prev) => prev.filter((item) => item.id !== product.id));
-          },
+          onPress: removeProduct,
         },
       ]
     );
   };
 
+  // Navegação entre telas
   const navigateTo = (screen, extraParams = {}) => {
-    navigation.navigate(screen, { userName, ...extraParams });
+    navigation.navigate(screen, {
+      userName,
+      ...extraParams,
+    });
   };
 
   return (
     <SafeAreaView style={styles.container}>
+
       {/* Menu superior */}
       <View style={styles.header}>
         <View style={styles.menu}>
+
           <View style={styles.menuRow}>
             <TouchableOpacity
               style={styles.menuButton}
@@ -213,14 +317,21 @@ export default function ProductsScreen({ route, navigation }) {
               style={styles.menuButton}
               onPress={() => navigateTo('Products')}
             >
-              <Text style={styles.menuText}>Dashboard</Text>
+              <Text style={styles.menuText}>
+                Dashboard
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.menuButton, styles.activeButton]}
+              style={[
+                styles.menuButton,
+                styles.activeButton,
+              ]}
               activeOpacity={1}
             >
-              <Text style={styles.menuText}>Produtos</Text>
+              <Text style={styles.menuText}>
+                Produtos
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -229,30 +340,39 @@ export default function ProductsScreen({ route, navigation }) {
               style={styles.menuButton}
               onPress={() => navigateTo('Sales')}
             >
-              <Text style={styles.menuText}>Vendas</Text>
+              <Text style={styles.menuText}>
+                Vendas
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.menuButton}
               onPress={() => navigateTo('EditProduct')}
             >
-              <Text style={styles.menuText}>Editar</Text>
+              <Text style={styles.menuText}>
+                Editar
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.menuButton}
               onPress={() => navigateTo('Help')}
             >
-              <Text style={styles.menuText}>Ajuda</Text>
+              <Text style={styles.menuText}>
+                Ajuda
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.profileButton}
               onPress={() => navigateTo('Profile')}
             >
-              <Text style={styles.butterfly}>🦋</Text>
+              <Text style={styles.butterfly}>
+                🦋
+              </Text>
             </TouchableOpacity>
           </View>
+
         </View>
       </View>
 
@@ -261,26 +381,43 @@ export default function ProductsScreen({ route, navigation }) {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Linha Olá usuário + Botão Novo (Figma) */}
+
+        {/* Usuário e botão Novo */}
         <View style={styles.topUserBar}>
-          <Text style={styles.greetingText}>Olá {userName}</Text>
+          <Text style={styles.greetingText}>
+            Olá {userName}
+          </Text>
 
           <TouchableOpacity
             style={styles.newButton}
-            onPress={() => navigateTo('EditProduct', { mode: 'create', product: null })}
+            onPress={() =>
+              navigateTo('EditProduct', {
+                mode: 'create',
+                product: null,
+              })
+            }
           >
-            <Text style={styles.newButtonText}>Novo</Text>
+            <Text style={styles.newButtonText}>
+              Novo
+            </Text>
           </TouchableOpacity>
         </View>
 
         <Text style={styles.title}>
-          {mode === 'delete' ? 'Selecione um produto para remover' : 'Produtos no sistema'}
+          {mode === 'delete'
+            ? 'Selecione um produto para remover'
+            : 'Produtos no sistema'}
         </Text>
 
         {/* Pesquisa */}
         <View style={styles.searchArea}>
           <View style={styles.searchContainer}>
-            <Ionicons name="search-outline" size={20} color="#222222" />
+
+            <Ionicons
+              name="search-outline"
+              size={20}
+              color="#222222"
+            />
 
             <TextInput
               style={styles.searchInput}
@@ -289,98 +426,210 @@ export default function ProductsScreen({ route, navigation }) {
               value={search}
               onChangeText={handleSearch}
             />
+
           </View>
         </View>
 
-        {/* Tabela */}
+        {/* Tabela de produtos */}
         <View style={styles.tableContainer}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+          >
             <View>
-              {/* Cabeçalho */}
+
+              {/* Cabeçalho da tabela */}
               <View style={styles.tableHeader}>
-                <Text style={[styles.headerText, styles.nameColumn]}>
+
+                <Text
+                  style={[
+                    styles.headerText,
+                    styles.nameColumn,
+                  ]}
+                >
                   Nome
                 </Text>
 
-                <Text style={[styles.headerText, styles.categoryColumn]}>
+                <Text
+                  style={[
+                    styles.headerText,
+                    styles.categoryColumn,
+                  ]}
+                >
                   Tipo
                 </Text>
 
-                <Text style={[styles.headerText, styles.valueColumn]}>
+                <Text
+                  style={[
+                    styles.headerText,
+                    styles.valueColumn,
+                  ]}
+                >
                   Custo
                 </Text>
 
-                <Text style={[styles.headerText, styles.valueColumn]}>
+                <Text
+                  style={[
+                    styles.headerText,
+                    styles.valueColumn,
+                  ]}
+                >
                   Valor
                 </Text>
 
-                <Text style={[styles.headerText, styles.expiryColumn]}>
+                <Text
+                  style={[
+                    styles.headerText,
+                    styles.expiryColumn,
+                  ]}
+                >
                   Validade
                 </Text>
 
-                <Text style={[styles.headerText, styles.actionColumn]}>
+                <Text
+                  style={[
+                    styles.headerText,
+                    styles.actionColumn,
+                  ]}
+                >
                   Opções
                 </Text>
+
               </View>
 
-              {/* Linhas */}
-              {visibleProducts.map((product) => (
-                <View key={product.id} style={styles.tableRow}>
-                  <Text style={[styles.cellText, styles.nameColumn]} numberOfLines={1}>
-                    {product.name}
-                  </Text>
+              {/* Produtos cadastrados */}
+              {!loading &&
+                visibleProducts.map((product) => (
+                  <View
+                    key={String(product.id)}
+                    style={styles.tableRow}
+                  >
 
-                  <Text style={[styles.cellText, styles.categoryColumn]} numberOfLines={1}>
-                    {product.category}
-                  </Text>
+                    <Text
+                      style={[
+                        styles.cellText,
+                        styles.nameColumn,
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {product.name}
+                    </Text>
 
-                  <Text style={[styles.cellText, styles.valueColumn]}>
-                    {product.cost}
-                  </Text>
+                    <Text
+                      style={[
+                        styles.cellText,
+                        styles.categoryColumn,
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {product.category}
+                    </Text>
 
-                  <Text style={[styles.cellText, styles.valueColumn]}>
-                    {product.price}
-                  </Text>
+                    <Text
+                      style={[
+                        styles.cellText,
+                        styles.valueColumn,
+                      ]}
+                    >
+                      {product.cost}
+                    </Text>
 
-                  <Text style={[styles.cellText, styles.expiryColumn]}>
-                    {product.expiry}
-                  </Text>
+                    <Text
+                      style={[
+                        styles.cellText,
+                        styles.valueColumn,
+                      ]}
+                    >
+                      {product.price}
+                    </Text>
 
-                  <View style={[styles.actionColumn, styles.actionCell]}>
-                    <TouchableOpacity onPress={() => handleEditProduct(product)}>
-                      <Ionicons
-                        name="create-outline"
-                        size={19}
-                        color="#222222"
-                      />
-                    </TouchableOpacity>
+                    <Text
+                      style={[
+                        styles.cellText,
+                        styles.expiryColumn,
+                      ]}
+                    >
+                      {product.expiry}
+                    </Text>
 
-                    <TouchableOpacity onPress={() => handleDeleteProduct(product)}>
-                      <Ionicons
-                        name="trash-outline"
-                        size={18}
-                        color={mode === 'delete' ? '#DC2626' : '#666666'}
-                      />
-                    </TouchableOpacity>
+                    <View
+                      style={[
+                        styles.actionColumn,
+                        styles.actionCell,
+                      ]}
+                    >
+
+                      {/* Botão editar */}
+                      <TouchableOpacity
+                        onPress={() =>
+                          handleEditProduct(product)
+                        }
+                      >
+                        <Ionicons
+                          name="create-outline"
+                          size={19}
+                          color="#222222"
+                        />
+                      </TouchableOpacity>
+
+                      {/* Botão excluir */}
+                      <TouchableOpacity
+                        onPress={() =>
+                          handleDeleteProduct(product)
+                        }
+                      >
+                        <Ionicons
+                          name="trash-outline"
+                          size={18}
+                          color={
+                            mode === 'delete'
+                              ? '#DC2626'
+                              : '#666666'
+                          }
+                        />
+                      </TouchableOpacity>
+
+                    </View>
                   </View>
-                </View>
-              ))}
+                ))}
+
             </View>
           </ScrollView>
 
-          {filteredProducts.length === 0 && (
+          {/* Carregamento */}
+          {loading && (
             <Text style={styles.emptyText}>
-              Nenhum produto encontrado.
+              Carregando produtos...
             </Text>
           )}
 
+          {/* Nenhum produto cadastrado */}
+          {!loading && productsList.length === 0 && (
+            <Text style={styles.emptyText}>
+              Nenhum produto cadastrado.
+              Clique em Novo para adicionar.
+            </Text>
+          )}
+
+          {/* Nenhum resultado na pesquisa */}
+          {!loading &&
+            productsList.length > 0 &&
+            filteredProducts.length === 0 && (
+              <Text style={styles.emptyText}>
+                Nenhum produto encontrado.
+              </Text>
+            )}
+
           {/* Paginação */}
           <View style={styles.pagination}>
+
             <Text style={styles.paginationText}>
               Mostrando página {currentPage} de {totalPages}
             </Text>
 
             <View style={styles.paginationControls}>
+
               {currentPage > 1 && (
                 <TouchableOpacity
                   style={styles.nextButton}
@@ -394,7 +643,9 @@ export default function ProductsScreen({ route, navigation }) {
                 </TouchableOpacity>
               )}
 
-              <Text style={styles.pageNumber}>{currentPage}</Text>
+              <Text style={styles.pageNumber}>
+                {currentPage}
+              </Text>
 
               <TouchableOpacity
                 style={styles.nextButton}
@@ -404,16 +655,24 @@ export default function ProductsScreen({ route, navigation }) {
                 <Ionicons
                   name="chevron-forward"
                   size={19}
-                  color={currentPage === totalPages ? '#AAAAAA' : '#222222'}
+                  color={
+                    currentPage === totalPages
+                      ? '#AAAAAA'
+                      : '#222222'
+                  }
                 />
               </TouchableOpacity>
+
             </View>
           </View>
+
         </View>
+
       </ScrollView>
 
-      {/* Decoração inferior do Figma */}
+      {/* Decoração inferior */}
       <View style={styles.bottomDecoration} />
+
     </SafeAreaView>
   );
 }
@@ -422,7 +681,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 10 : 0,
+    paddingTop:
+      Platform.OS === 'android'
+        ? (StatusBar.currentHeight || 24) + 10
+        : 0,
     paddingBottom: Platform.OS === 'android' ? 16 : 0,
   },
 
@@ -452,7 +714,10 @@ const styles = StyleSheet.create({
     borderRadius: 9,
     elevation: 3,
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
     shadowOpacity: 0.18,
     shadowRadius: 1,
   },
@@ -509,7 +774,10 @@ const styles = StyleSheet.create({
     borderRadius: 9,
     elevation: 3,
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
     shadowOpacity: 0.18,
     shadowRadius: 1,
   },
@@ -550,7 +818,9 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 13,
     color: '#333333',
-    outlineStyle: 'none',
+    ...(Platform.OS === 'web'
+      ? { outlineStyle: 'none' }
+      : {}),
   },
 
   tableContainer: {
