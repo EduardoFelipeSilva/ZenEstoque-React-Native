@@ -13,9 +13,10 @@ import {
 } from 'react-native';
 
 export default function EditProductScreen({ route, navigation }) {
-  const userName = route?.params?.userName || 'usuário';
-  const productToEdit = route?.params?.product || null;
-  const isCreateMode = route?.params?.mode === 'create';
+  const params = (route && route.params) || {};
+  const userName = params.userName || 'usuário';
+  const productToEdit = params.product || null;
+  const isCreateMode = params.mode === 'create';
 
   const [nome, setNome] = useState('');
   const [preco, setPreco] = useState('');
@@ -64,7 +65,7 @@ export default function EditProductScreen({ route, navigation }) {
     }
 
     const savedProduct = {
-      id: productToEdit?.id || String(Date.now()),
+      id: (productToEdit && productToEdit.id) || String(Date.now()),
       nome: nome.trim(),
       tipo: categoria.trim(),
       custo: parsedCusto,
@@ -165,9 +166,6 @@ export default function EditProductScreen({ route, navigation }) {
               ? 'Insira as informações abaixo sobre o produto\na ser cadastrado.'
               : 'Insira as informações abaixo sobre o produto\na ser modificado.'}
           </Text>
-
-          {/* Detalhe triangular do Figma */}
-          <View style={styles.cornerDecoration} />
         </View>
 
         {/* Formulário */}
@@ -226,6 +224,9 @@ export default function EditProductScreen({ route, navigation }) {
           </Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Decoração inferior direita inclinada */}
+      <View style={styles.bottomDecoration} pointerEvents="none" />
     </SafeAreaView>
   );
 }
@@ -323,21 +324,6 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
 
-  cornerDecoration: {
-    position: 'absolute',
-    top: 0,
-    right: -20,
-    width: 0,
-    height: 0,
-    borderTopWidth: 0,
-    borderBottomWidth: 135,
-    borderLeftWidth: 65,
-    borderTopColor: 'transparent',
-    borderBottomColor: '#C084FC',
-    borderLeftColor: 'transparent',
-    transform: [{ rotate: '180deg' }],
-  },
-
   form: {
     width: '100%',
   },
@@ -377,5 +363,16 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '600',
+  },
+
+  bottomDecoration: {
+    position: 'absolute',
+    bottom: -45,
+    right: -45,
+    width: 190,
+    height: 150,
+    backgroundColor: '#C084FC',
+    borderTopLeftRadius: 24,
+    transform: [{ rotate: '-22deg' }],
   },
 });
