@@ -13,7 +13,7 @@ import {
   Alert,
 } from 'react-native';
 
-import { Ionicons, FontAwesome } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/api';
 import { SessionManager } from '../services/session';
@@ -114,18 +114,6 @@ export default function LoginScreen({ navigation }) {
       'Link enviado',
       `Enviamos um link de redefinição de senha para ${cleanEmail}.`
     );
-  };
-
-  const handleSocialLogin = async (provider) => {
-    try {
-      const socialEmail = `${provider.toLowerCase()}@zenestoques.com`;
-      await SessionManager.setLoggedUser(socialEmail);
-      navigation.replace('Home', {
-        userName: `Usuário ${provider}`,
-      });
-    } catch (error) {
-      Alert.alert('Erro', `Não foi possível entrar com ${provider}.`);
-    }
   };
 
   return (
@@ -235,32 +223,6 @@ export default function LoginScreen({ navigation }) {
               </Text>
             </TouchableOpacity>
           </View>
-
-          <View style={styles.dividerContainer}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>Ou</Text>
-            <View style={styles.dividerLine} />
-          </View>
-
-          <TouchableOpacity
-            style={styles.socialButton}
-            onPress={() => handleSocialLogin('Apple')}
-          >
-            <FontAwesome name="apple" size={20} color="#111827" />
-            <Text style={styles.socialButtonText}>
-              Login com Apple
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.socialButton}
-            onPress={() => handleSocialLogin('Google')}
-          >
-            <Ionicons name="logo-google" size={20} color="#DB4437" />
-            <Text style={styles.socialButtonText}>
-              Login com Google
-            </Text>
-          </TouchableOpacity>
 
           <View style={styles.signupContainer}>
             <Text style={styles.signupText}>
@@ -428,47 +390,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 
-  dividerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 26,
-  },
-
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#E5E7EB',
-  },
-
-  dividerText: {
-    marginHorizontal: 16,
-    color: '#6B7280',
-    fontSize: 13,
-  },
-
-  socialButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 50,
-    borderWidth: 1,
-    borderColor: '#D8B4FE',
-    borderRadius: 12,
-    marginBottom: 14,
-    backgroundColor: '#FFFFFF',
-  },
-
-  socialButtonText: {
-    marginLeft: 10,
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#111827',
-  },
-
   signupContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 16,
+    marginTop: 24,
   },
 
   signupText: {
