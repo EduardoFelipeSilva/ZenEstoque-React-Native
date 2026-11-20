@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   StyleSheet,
@@ -9,10 +8,12 @@ import {
   ScrollView,
   Platform,
   StatusBar,
+  Alert,
 } from 'react-native';
+import { SessionManager } from '../services/session';
 
 export default function HomeScreen({ route, navigation }) {
-  const userName = route?.params?.userName || 'usuário';
+  const userName = (route && route.params && route.params.userName) || 'usuário';
 
   const handleNavigate = (screen, extraParams = {}) => {
     if (!screen || screen === 'Home') return;
@@ -21,6 +22,36 @@ export default function HomeScreen({ route, navigation }) {
       userName,
       ...extraParams,
     });
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Sair da conta',
+      'Deseja realmente sair do aplicativo?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Sair',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              if (SessionManager && SessionManager.clearSession) {
+                await SessionManager.clearSession();
+              } else if (SessionManager && SessionManager.logout) {
+                await SessionManager.logout();
+              }
+            } catch (error) {
+              console.log('Erro ao encerrar sessão:', error);
+            }
+
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Welcome' }],
+            });
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -172,6 +203,16 @@ export default function HomeScreen({ route, navigation }) {
           >
             <Text style={styles.mainButtonText}>
               Editar
+            </Text>
+          </TouchableOpacity>
+
+          {/* Sair */}
+          <TouchableOpacity
+            style={styles.mainButton}
+            onPress={handleLogout}
+          >
+            <Text style={styles.mainButtonText}>
+              Sair
             </Text>
           </TouchableOpacity>
 
